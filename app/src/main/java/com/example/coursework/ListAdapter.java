@@ -13,7 +13,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.gson.Gson;
+
 import java.util.List;
+
 //public class ListAdapter extends RecyclerView.Adapter<User>{
 public class ListAdapter extends ArrayAdapter<User> {
 
@@ -21,8 +26,11 @@ public class ListAdapter extends ArrayAdapter<User> {
 //    private TextView name;
 //    private ImageView control;
 
+    List<User> users;
+
     public ListAdapter(@NonNull Context context, List<User> users) {
         super(context, 0, users);
+        this.users=users;
     }
 
     @Override
@@ -35,40 +43,22 @@ public class ListAdapter extends ArrayAdapter<User> {
 //        name = convertView.findViewById(R.id.name);
 //        control = convertView.findViewById(R.id.control);
 
-        TextView number=convertView.findViewById(R.id.number);
+        TextView number = convertView.findViewById(R.id.number);
         ImageView avatar = convertView.findViewById(R.id.avatar);
         TextView name = convertView.findViewById(R.id.name);
         ImageView control = convertView.findViewById(R.id.control);
 
         User user = getItem(position);
 
-
-
         int numberWidth = String.valueOf(getCount()).length(); // Ширина самого большого номера
         String formattedNumber = String.format("%0" + numberWidth + "d", position + 1);
         number.setText(formattedNumber);
-//        number.setText(position+1);
-
 
         name.setText(user.getName());
         control.setOnClickListener(view -> {
             showPopupMenu(view, position);
 
         });
-
-//        if (user != null) {
-////            String formattedItemNumber = String.format("%02d", itemNumber);
-//            int numberWidth = String.valueOf(getCount()).length(); // Ширина самого большого номера
-//            String formattedNumber = String.format("%0" + numberWidth + "d", position + 1);
-//            number.setText(formattedNumber);
-////            number.setText(Integer.toString(position+1));
-////            avatar.setImageResource(user.getImageResource());
-//            name.setText(user.getName());
-//            control.setOnClickListener(view -> {
-//                    showPopupMenu(view, position);
-//
-//            });
-//        }
 
         return convertView;
     }
@@ -77,36 +67,39 @@ public class ListAdapter extends ArrayAdapter<User> {
         PopupMenu popupMenu = new PopupMenu(getContext(), view);
         popupMenu.getMenuInflater().inflate(R.menu.popup_menu, popupMenu.getMenu());
 
-        User currentUser=getItem(position);
+        User currentUser = getItem(position);
 
         popupMenu.setOnMenuItemClickListener(item -> {
-            int id=item.getItemId();
+            int id = item.getItemId();
+            boolean needNotify = false;
             if (id == R.id.action_edit) {
                 currentUser.setName("edit");
-                notifyDataSetChanged();
-                return true;
-            } else if (id == R.id.action_delete) {
-                remove(currentUser);
-                notifyDataSetChanged();
-                return true;
+                needNotify = true;
             }
-            else if(id == R.id.action_end){
+            else if (id == R.id.action_delete) {
+                remove(currentUser);
+                needNotify = true;
+            }
+            else if (id == R.id.action_end) {
                 remove(currentUser);
                 add(currentUser);
-                notifyDataSetChanged();
-                return true;
+                needNotify = true;
+            }
+            else if (id == R.id.action_skip) {
+                remove(currentUser);
+                int newPosition = position + 1;
+                insert(currentUser, newPosition);
+                needNotify = true;
             }
 
-            else if(id==R.id.action_skip){
-                remove(currentUser);
-
-                // Вычисляем позицию, на которую нужно переместить элемент
-                int newPosition = position + 1;
-
-                // Вставка элемента на новую позицию
-                insert(currentUser, newPosition);
-
+            if (needNotify) {
                 notifyDataSetChanged();
+
+                FirebaseDatabase database = FirebaseDatabase.getInstance();
+                DatabaseReference myRef = database.getReference("list1");
+                Gson gson = new Gson();
+                String userListJson = gson.toJson(users);
+                myRef.setValue(userListJson);
                 return true;
             }
             return false;

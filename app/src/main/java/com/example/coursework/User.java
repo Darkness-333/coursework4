@@ -1,9 +1,15 @@
 package com.example.coursework;
 
-public class User {
+import java.io.Serializable;
+
+public class User implements Serializable {
     private String name;
     private int avatarImage;
     private String id;
+
+    public User(){
+//        id="0";
+    }
 
     public User(String name) {
         this.name = name;

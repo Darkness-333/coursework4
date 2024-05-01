@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "556615127807",
+    "project_id": "queue-manager-d50be",
+    "storage_bucket": "queue-manager-d50be.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:556615127807:android:aa2b886103c2691349f2ca",
+        "android_client_info": {
+          "package_name": "com.example.coursework"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCgj6uwKGk3mpbCHHgUHFEPp1fTbv7quqI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
