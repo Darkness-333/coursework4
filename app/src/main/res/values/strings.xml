@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Coursework</string>
+    <string name="about_author">Информация об авторе</string>
+    <string name="about_app">Информация о программе</string>
+</resources>
