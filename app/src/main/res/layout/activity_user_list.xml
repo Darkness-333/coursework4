@@ -4,7 +4,7 @@
 <!--    xmlns:tools="http://schemas.android.com/tools"-->
 <!--    android:layout_width="match_parent"-->
 <!--    android:layout_height="match_parent"-->
-<!--    tools:context=".MainActivity">-->
+<!--    tools:context=".UserListActivity">-->
 <!--    -->
 <!--    <ListView-->
 <!--        android:id="@+id/list"-->
@@ -37,7 +37,7 @@
 <!--    android:layout_width="match_parent"-->
 <!--    android:layout_height="match_parent"-->
 <!--    android:orientation="vertical"-->
-<!--    tools:context=".MainActivity">-->
+<!--    tools:context=".UserListActivity">-->
 
 <!--    <Button-->
 <!--        android:layout_gravity="center"-->
@@ -70,7 +70,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".activities.UserListActivity">
 
     <Button
         android:id="@+id/add"

@@ -1,4 +1,4 @@
-package com.example.coursework;
+package com.example.coursework.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -69,7 +69,7 @@ public class LoginActivity extends AppCompatActivity {
     private void updateUI(FirebaseUser currentUser) {
         if (currentUser != null) {
             // Пользователь авторизован
-            startActivity(new Intent(this, MainActivity.class));
+            startActivity(new Intent(this, AvailableListsActivity.class));
             finish(); // Закрываем текущую активность, чтобы пользователь не мог вернуться по кнопке "назад"
         }
     }
@@ -84,7 +84,7 @@ public class LoginActivity extends AppCompatActivity {
                             FirebaseUser user = mAuth.getCurrentUser();
                             if (user != null) {
                                 // Переход к другой активности
-                                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                                Intent intent = new Intent(LoginActivity.this, UserListActivity.class);
                                 startActivity(intent);
                                 finish();
                             }

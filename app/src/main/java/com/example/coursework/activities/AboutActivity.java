@@ -1,4 +1,4 @@
-package com.example.coursework;
+package com.example.coursework.activities;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 
+import com.example.coursework.R;
 import com.example.coursework.databinding.ActivityAboutBinding;
 
 public class AboutActivity extends AppCompatActivity {

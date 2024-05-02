@@ -1,7 +1,6 @@
 package com.example.coursework;
 
 import android.content.Context;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,24 +10,23 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.Gson;
 
 import java.util.List;
 
-//public class ListAdapter extends RecyclerView.Adapter<User>{
-public class ListAdapter extends ArrayAdapter<User> {
+//public class UserListAdapter extends RecyclerView.Adapter<User>{
+public class UserListAdapter extends ArrayAdapter<User> {
 
 //    private ImageView avatar;
 //    private TextView name;
 //    private ImageView control;
 
     List<User> users;
+    DatabaseReference databaseRef;
 
-    public ListAdapter(@NonNull Context context, List<User> users) {
+    public UserListAdapter(@NonNull Context context, List<User> users) {
         super(context, 0, users);
         this.users=users;
     }
@@ -36,7 +34,7 @@ public class ListAdapter extends ArrayAdapter<User> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
         if (convertView == null) {
-            convertView = LayoutInflater.from(getContext()).inflate(R.layout.list_item, parent, false);
+            convertView = LayoutInflater.from(getContext()).inflate(R.layout.user_item, parent, false);
         }
 
 //        avatar = convertView.findViewById(R.id.avatar);
@@ -57,18 +55,19 @@ public class ListAdapter extends ArrayAdapter<User> {
         name.setText(user.getName());
         control.setOnClickListener(view -> {
             showPopupMenu(view, position);
-
         });
 
         return convertView;
     }
 
+    public void setDatabaseReference(DatabaseReference ref){
+        databaseRef=ref;
+    }
+
     public void showPopupMenu(View view, int position) {
         PopupMenu popupMenu = new PopupMenu(getContext(), view);
-        popupMenu.getMenuInflater().inflate(R.menu.popup_menu, popupMenu.getMenu());
-
+        popupMenu.getMenuInflater().inflate(R.menu.user_popup_menu, popupMenu.getMenu());
         User currentUser = getItem(position);
-
         popupMenu.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             boolean needNotify = false;
@@ -86,27 +85,23 @@ public class ListAdapter extends ArrayAdapter<User> {
                 needNotify = true;
             }
             else if (id == R.id.action_skip) {
-                remove(currentUser);
-                int newPosition = position + 1;
-                insert(currentUser, newPosition);
-                needNotify = true;
+                if (getCount()>1){
+                    remove(currentUser);
+                    int newPosition = position + 1;
+                    insert(currentUser, newPosition);
+                    needNotify = true;
+                }
             }
 
             if (needNotify) {
                 notifyDataSetChanged();
-
-                FirebaseDatabase database = FirebaseDatabase.getInstance();
-                DatabaseReference myRef = database.getReference("list1");
                 Gson gson = new Gson();
                 String userListJson = gson.toJson(users);
-                myRef.setValue(userListJson);
+                databaseRef.setValue(userListJson);
                 return true;
             }
             return false;
-
-
         });
-
         popupMenu.show();
     }
 }
