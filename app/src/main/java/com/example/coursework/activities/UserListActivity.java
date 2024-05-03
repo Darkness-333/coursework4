@@ -3,12 +3,16 @@ package com.example.coursework.activities;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ClipData;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.DragEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -35,9 +39,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserListActivity extends AppCompatActivity {
-    // TODO: 02.05.2024 добавить стелку назад для перехода в меню выбора очереди,
+    // TODO: 02.05.2024
     //  добавление собственноручно созданных участников, шторка со всеми участниками
-    //  возможно одбрение на вход в очередь
+    //  возможно одобрение на вход в очередь
     ActivityUserListBinding binding;
     String TAG = "mylogs";
     List<User> userList; // хранить информацию о пользователях очереди
@@ -95,20 +99,57 @@ public class UserListActivity extends AppCompatActivity {
             }
         });
 
-        addButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                addYourself();
+        binding.back.setOnClickListener(view -> {
+            finish();
+        });
+
+        addButton.setOnClickListener(view -> {
+            addYourself();
 //                userList.add(new User("last"));
 //                for (int i=1;i<=15;i++){
 //                    userList.add(new User("User"+i));
 //                }
 
-                // преобразуем список в json и отправляем изменения в бд
-                String userListJson = gson.toJson(userList);
-                dataRef.setValue(userListJson);
+            // преобразуем список в json и отправляем изменения в бд
+            String userListJson = gson.toJson(userList);
+            dataRef.setValue(userListJson);
+        });
+
+        listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                ClipData data = ClipData.newPlainText("", "");
+                View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
+                view.startDragAndDrop(data, shadowBuilder, position, 0);
+                return true;
             }
         });
+
+        listView.setOnDragListener(new View.OnDragListener() {
+            @Override
+            public boolean onDrag(View v, DragEvent event) {
+                switch (event.getAction()) {
+                    case DragEvent.ACTION_DROP:
+                        // Получите позиции элементов списка и выполните перемещение
+                        int positionFrom = (int) event.getLocalState();
+                        int positionTo = listView.pointToPosition((int) event.getX(), (int) event.getY());
+                        if (positionTo != ListView.INVALID_POSITION) {
+                            // Поменяйте местами элементы в списке данных
+                            User item = adapter.getItem(positionFrom);
+                            adapter.remove(item);
+                            adapter.insert(item, positionTo);
+                            adapter.notifyDataSetChanged();
+
+                            // преобразуем список в json и отправляем изменения в бд
+                            String userListJson = gson.toJson(userList);
+                            dataRef.setValue(userListJson);
+                        }
+                        break;
+                }
+                return true;
+            }
+        });
+
     }
 
 

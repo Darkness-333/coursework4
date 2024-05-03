@@ -49,7 +49,6 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
         setContentView(binding.getRoot());
 
         listView = binding.list;
-//        adapter = new ArrayAdapter<>(AvailableListsActivity.this, android.R.layout.simple_list_item_1, listsName);
         adapter = new AvailableListsAdapter(AvailableListsActivity.this, listsName, listsId);
         listView.setAdapter(adapter);
 
@@ -115,19 +114,11 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
             }
         });
 
-        createButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                CreateQueueDialog.showDialog(AvailableListsActivity.this,AvailableListsActivity.this);
-            }
-        });
+        createButton.setOnClickListener(view ->
+                CreateQueueDialog.showDialog(AvailableListsActivity.this,AvailableListsActivity.this));
 
-        addButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                AddQueueDialog.showDialog(AvailableListsActivity.this,AvailableListsActivity.this);
-            }
-        });
+        addButton.setOnClickListener(view ->
+                AddQueueDialog.showDialog(AvailableListsActivity.this,AvailableListsActivity.this));
     }
 
     @Override
@@ -151,7 +142,6 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
 
     @Override
     public void onAddQueue(String listId) {
-//        String listId=listId;
         DatabaseReference nameRef=database.getReference("lists").child(listId).child("name");
         nameRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
@@ -161,27 +151,22 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                     listsId.add(listId);
                     // добавляем в ссылку со всеми id списков пользователя обновленный список
                     usersListsIdReference.setValue(listsId);
+                    //получаем название списка и отображаем его
                     String listName=dataSnapshot.getValue(String.class);
                     listsName.add(listName);
                     adapter.notifyDataSetChanged();
-
-                } else {
+                }
+                else {
                     Snackbar.make(binding.getRoot(),"Неверный id",Snackbar.LENGTH_SHORT).show();
-                    // DatabaseReference не существует
-                    // Можете выполнить дополнительные действия здесь
                 }
             }
 
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Toast.makeText(AvailableListsActivity.this, "Failed to read value.", Toast.LENGTH_SHORT).show();
-
-                // Обработка ошибок, если таковые возникли при попытке чтения данных
             }
         });
 
     }
 
-//    @Override
-//    public void onNegativeButtonClicked() {    }
 }

@@ -1,6 +1,7 @@
 package com.example.coursework;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,12 +17,13 @@ import com.google.gson.Gson;
 
 import java.util.List;
 
-//public class UserListAdapter extends RecyclerView.Adapter<User>{
 public class UserListAdapter extends ArrayAdapter<User> {
 
 //    private ImageView avatar;
 //    private TextView name;
 //    private ImageView control;
+
+    // TODO: 03.05.2024 добавить права пользователя и админа 
 
     List<User> users;
     DatabaseReference databaseRef;
@@ -60,6 +62,7 @@ public class UserListAdapter extends ArrayAdapter<User> {
         return convertView;
     }
 
+
     public void setDatabaseReference(DatabaseReference ref){
         databaseRef=ref;
     }
@@ -85,7 +88,7 @@ public class UserListAdapter extends ArrayAdapter<User> {
                 needNotify = true;
             }
             else if (id == R.id.action_skip) {
-                if (getCount()>1){
+                if (position+1<=getCount()-1){
                     remove(currentUser);
                     int newPosition = position + 1;
                     insert(currentUser, newPosition);
