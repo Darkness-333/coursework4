@@ -17,6 +17,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.widget.PopupMenu;
 
 import com.example.coursework.activities.AvailableListsActivity;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.Gson;
 
 import java.util.List;
@@ -42,6 +46,8 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
         number.setText(Integer.toString(position+1));
         name.setText(getItem(position));
 
+
+
 //        User user = getItem(position);
 //
 //        int numberWidth = String.valueOf(getCount()).length(); // Ширина самого большого номера
@@ -62,6 +68,13 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
         PopupMenu popupMenu = new PopupMenu(getContext(), view);
         popupMenu.getMenuInflater().inflate(R.menu.available_lists_popup_menu, popupMenu.getMenu());
         String currentQueue = getItem(position);
+
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        String userId = firebaseUser.getUid();
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference userListsIdRef = database.getReference("users").child(userId).child("listsId");
+
         popupMenu.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             boolean needNotify = false;
@@ -76,13 +89,23 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
 //                Toast.makeText(getContext(), "Текст скопирован в буфер обмена", Toast.LENGTH_SHORT).show();
             }
             else if (id == R.id.action_quit) {
+
+                // записываем имя в отображаемый список
                 // TODO: 02.05.2024 удалить список из доступных пользователю
                 remove(currentQueue);
+                listsId.remove(position);
+                userListsIdRef.setValue(listsId);
                 needNotify = true;
             }
             else if (id == R.id.action_delete) {
                 // TODO: 02.05.2024 удалить список, и его id у всех участников 
                 remove(currentQueue);
+                //удаление из всех списков
+                DatabaseReference listsReference=database.getReference("lists").child(listsId.get(position));
+                listsReference.removeValue();
+                //удаление у пользователя
+                listsId.remove(position);
+                userListsIdRef.setValue(listsId);
                 needNotify = true;
             }
             if (needNotify) {

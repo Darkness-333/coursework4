@@ -45,14 +45,21 @@ public class LoginActivity extends AppCompatActivity {
         buttonSignIn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                signIn(editTextEmail.getText().toString(), editTextPassword.getText().toString());
+                String email = editTextEmail.getText().toString();
+                String password = editTextPassword.getText().toString();
+                if (!email.isEmpty() && !password.isEmpty())
+                    signIn(email, password);
             }
         });
 
         buttonSignUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                signUp(editTextEmail.getText().toString(), editTextPassword.getText().toString());
+                String email = editTextEmail.getText().toString();
+                String password = editTextPassword.getText().toString();
+                if (!email.isEmpty() && !password.isEmpty())
+                    signUp(email, password);
+//                signUp(editTextEmail.getText().toString(), editTextPassword.getText().toString());
             }
         });
     }
@@ -60,10 +67,21 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
-        // Check if user is signed in (non-null) and update UI accordingly.
-        FirebaseUser currentUser = mAuth.getCurrentUser();
 
-        updateUI(currentUser);
+        Intent intent=getIntent();
+        if (!intent.hasExtra("fromAct")){
+            FirebaseUser currentUser = mAuth.getCurrentUser();
+            updateUI(currentUser);
+        }
+//        if ( getIntent() == null){
+//            FirebaseUser currentUser = mAuth.getCurrentUser();
+//
+//            updateUI(currentUser);
+//        }
+        // Check if user is signed in (non-null) and update UI accordingly.
+//        FirebaseUser currentUser = mAuth.getCurrentUser();
+//
+//        updateUI(currentUser);
     }
 
     private void updateUI(FirebaseUser currentUser) {
@@ -84,7 +102,7 @@ public class LoginActivity extends AppCompatActivity {
                             FirebaseUser user = mAuth.getCurrentUser();
                             if (user != null) {
                                 // Переход к другой активности
-                                Intent intent = new Intent(LoginActivity.this, UserListActivity.class);
+                                Intent intent = new Intent(LoginActivity.this, AvailableListsActivity.class);
                                 startActivity(intent);
                                 finish();
                             }

@@ -39,6 +39,8 @@ android {
 
 dependencies {
 
+    implementation("com.squareup.picasso:picasso:2.71828")
+
     implementation ("com.google.code.gson:gson:2.10")
 
     implementation(platform("com.google.firebase:firebase-bom:32.8.1"))
@@ -49,6 +51,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("com.google.firebase:firebase-auth:22.3.1")
     implementation("com.google.firebase:firebase-database:20.3.1")
+    implementation("com.google.firebase:firebase-storage:21.0.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")

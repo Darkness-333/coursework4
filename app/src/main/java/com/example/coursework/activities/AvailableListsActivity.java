@@ -33,10 +33,10 @@ import java.util.List;
 public class AvailableListsActivity extends AppCompatActivity implements CreateQueueDialog.DialogCallback, AddQueueDialog.DialogCallback {
 
     ListView listView;
-    DatabaseReference usersListsIdReference;
     List<String> listsName = new ArrayList<>();
     List<String> listsId = new ArrayList<>();
     ActivityAvailableListsBinding binding;
+    DatabaseReference userListsIdRef;
     FirebaseDatabase database;
     ArrayAdapter<String> adapter;
 
@@ -65,26 +65,70 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
         String userId = firebaseUser.getUid();
         // Получение доступных списков для текущего пользователя из базы данных Firebase
         database = FirebaseDatabase.getInstance();
-        usersListsIdReference = database.getReference("users").child(userId).child("listsId");
+        userListsIdRef = database.getReference("users").child(userId).child("listsId");
 
+
+//        binding.back.setOnClickListener(view -> {
+//            Intent intent=new Intent(this, LoginActivity.class);
+//            intent.putExtra("fromAct", true);
+//            startActivity(intent);
+//        });
+
+        binding.profile.setOnClickListener(view -> {
+            Intent intent=new Intent(this, ProfileActivity.class);
+            startActivity(intent);
+        });
 //        Gson gson=new Gson();
-        usersListsIdReference.addListenerForSingleValueEvent(new ValueEventListener() {
+//        userListsIdRef.addValueEventListener(new ValueEventListener() {
+// TODO: 06.05.2024 добавить список пользователей в ссылку списка и при удалении ссылки удалять id списока у всех пользователей 
+        userListsIdRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            boolean needUpdateListsId=false;
+            int totalChildrenCount;
+            int completedChildrenCount = 0;
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+//                listsId.clear();
+                totalChildrenCount = (int) dataSnapshot.getChildrenCount();
                 // Получаем список всех id списка в snapshot, получаем конкретное id,
                 // получаем ссылку на имя списка по id, заносим имя в список
                 for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Log.d(TAG, "onDataChange: "+needUpdateListsId);
                     String listId = snapshot.getValue(String.class);
-                    listsId.add(listId);
+//                    listsId.add(listId);
                     DatabaseReference listNameReference=database.getReference("lists").child(listId).child("name");
-                    listNameReference.addListenerForSingleValueEvent(new ValueEventListener() {
+                    listNameReference.addValueEventListener(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
-                            String listName = snapshot.getValue(String.class);
-                            if (listName != null) {
+                            if (snapshot.exists()){
+
+                                Log.d(TAG, "onDataChange: "+"exist");
+                                listsId.add(listId);
+                                String listName = snapshot.getValue(String.class);
+                                Log.d(TAG, "onDataChange: "+listName);
                                 listsName.add(listName);
                                 adapter.notifyDataSetChanged();
                             }
+                            else{
+                                Log.d(TAG, "onDataChange: "+"not exist");
+                                needUpdateListsId=true;
+                                Log.d(TAG, "in else: "+needUpdateListsId);
+                            }
+
+                            completedChildrenCount++;
+                            if (completedChildrenCount == totalChildrenCount) {
+                                if (needUpdateListsId) {
+                                    userListsIdRef.setValue(listsId);
+                                }
+                                progressBar.setVisibility(View.GONE);
+                                createButton.setEnabled(true);
+                                addButton.setEnabled(true);
+                            }
+
+//                            String listName = snapshot.getValue(String.class);
+//                            if (listName != null) {
+//                                listsName.add(listName);
+//                                adapter.notifyDataSetChanged();
+//                            }
                         }
                         @Override
                         public void onCancelled(@NonNull DatabaseError error) {
@@ -92,10 +136,16 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                         }
                     });
                 }
-                adapter.notifyDataSetChanged();
-                progressBar.setVisibility(View.GONE);
-                createButton.setEnabled(true);
-                addButton.setEnabled(true);
+//                Log.d(TAG, "before if: "+needUpdateListsId);
+//                if (needUpdateListsId){
+//                    Log.d(TAG, "onDataChange: "+"ok");
+//                    Log.d(TAG, "onDataChange: "+listsId);
+//                    userListsIdRef.setValue(listsId);
+//                }
+////                adapter.notifyDataSetChanged();
+//                progressBar.setVisibility(View.GONE);
+//                createButton.setEnabled(true);
+//                addButton.setEnabled(true);
             }
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
@@ -132,7 +182,7 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
         // добавляем id в список с id
         listsId.add(listId);
         // добавляем в ссылку со всеми id списков пользователя обновленный список
-        usersListsIdReference.setValue(listsId);
+        userListsIdRef.setValue(listsId);
 
         // записываем имя в отображаемый список
         listsName.add(name);
@@ -150,7 +200,7 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                     // добавляем id в список с id
                     listsId.add(listId);
                     // добавляем в ссылку со всеми id списков пользователя обновленный список
-                    usersListsIdReference.setValue(listsId);
+                    userListsIdRef.setValue(listsId);
                     //получаем название списка и отображаем его
                     String listName=dataSnapshot.getValue(String.class);
                     listsName.add(listName);

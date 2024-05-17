@@ -16,6 +16,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.example.coursework.R;
 import com.example.coursework.User;
@@ -67,10 +68,30 @@ public class UserListActivity extends AppCompatActivity {
         // получение ссылки из intent и передача ссылки в адаптер
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         String listId=getIntent().getStringExtra("listId");
-        dataRef = database.getReference("lists").child(listId).child("data");
-        adapter.setDatabaseReference(dataRef);
+
+
+        DatabaseReference listIdRef=database.getReference("lists").child(listId);
+        DatabaseReference listName=listIdRef.child("name");
+        dataRef = listIdRef.child("data");
+        adapter.setDatabaseReference(listIdRef);
 
         Gson gson = new Gson();
+
+        listIdRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (!snapshot.exists()){
+                    Toast.makeText(getApplicationContext(),"Кажется очередь была удалена", Toast.LENGTH_LONG).show();
+                    startActivity(new Intent(UserListActivity.this,AvailableListsActivity.class));
+                    finish();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
 
         dataRef.addValueEventListener(new ValueEventListener() {
             @Override
@@ -85,9 +106,7 @@ public class UserListActivity extends AppCompatActivity {
                     userList.addAll(updatedUserList); // Добавляем все элементы из нового списка
                     adapter.notifyDataSetChanged();
                 }
-                else {
-                    showSnackbar("Список пуст", Snackbar.LENGTH_SHORT);
-                }
+
                 progressBar.setVisibility(View.GONE);
                 addButton.setEnabled(true);
             }
@@ -104,15 +123,32 @@ public class UserListActivity extends AppCompatActivity {
         });
 
         addButton.setOnClickListener(view -> {
-            addYourself();
-//                userList.add(new User("last"));
-//                for (int i=1;i<=15;i++){
-//                    userList.add(new User("User"+i));
-//                }
+//            addYourself();
+//            // преобразуем список в json и отправляем изменения в бд
+//            String userListJson = gson.toJson(userList);
+//            dataRef.setValue(userListJson);
+            listName.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                    Log.d(TAG, "showPopupMenu: "+dataSnapshot);
 
-            // преобразуем список в json и отправляем изменения в бд
-            String userListJson = gson.toJson(userList);
-            dataRef.setValue(userListJson);
+                    if (dataSnapshot.exists()) {
+                        addYourself();
+                        String userListJson = gson.toJson(userList);
+                        dataRef.setValue(userListJson);
+                    } else {
+                        Toast.makeText(getApplicationContext(),"Кажется очередь была удалена", Toast.LENGTH_LONG).show();
+                        listIdRef.removeValue();
+                        startActivity(new Intent(UserListActivity.this,AvailableListsActivity.class));
+                        finish();
+                    }
+                }
+                @Override
+                public void onCancelled(@NonNull DatabaseError error) {
+
+                }
+            });
+
         });
 
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {

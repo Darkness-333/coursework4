@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/action_edit"
-        android:title="Редактировать"/>
+        android:id="@+id/action_start"
+        android:title="Перенести в начало"/>
     <item
-        android:id="@+id/action_delete"
-        android:title="Удалить"/>
+        android:id="@+id/action_exchange"
+        android:title="Обменять с"/>
+
     <item
         android:id="@+id/action_skip"
         android:title="Пропустить одного"/>
@@ -13,6 +14,12 @@
         android:id="@+id/action_end"
         android:title="Перенести в конец"
         />
+    <item
+        android:id="@+id/action_edit"
+        android:title="Редактировать имя"/>
+    <item
+        android:id="@+id/action_delete"
+        android:title="Удалить"/>
 <!--    <item-->
 <!--        android:id="@+id/add"-->
 <!--        android:title="Добавить в очередь"/>-->
