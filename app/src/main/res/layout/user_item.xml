@@ -27,7 +27,7 @@
         android:src="@drawable/user"
         android:layout_gravity="center"
         android:layout_marginStart="8dp"
-
+        android:scaleType="centerCrop"
         />
 
     <TextView

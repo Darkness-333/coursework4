@@ -6,8 +6,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -38,8 +40,10 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.Target;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -58,6 +62,7 @@ public class ProfileActivity extends AppCompatActivity {
     ActivityProfileBinding binding;
     FirebaseDatabase database;
     FirebaseStorage storage;
+    String TAG = "mylogs";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -115,25 +120,39 @@ public class ProfileActivity extends AppCompatActivity {
             }
         });
 
-//        imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
-//                    @Override
-//                    public void onSuccess(Uri uri) {
-//                        try {
-//                            Picasso.get()
-//                                    .load(uri)
-//                                    .into(avatarImageView);
-//                        } catch (Exception e) {
-//                            e.printStackTrace();
-//                        }
-//                    }
-//                })
-//                .addOnFailureListener(new OnFailureListener() {
-//                    @Override
-//                    public void onFailure(@NonNull Exception e) {
-//                        Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-//
-//                    }
-//                });
+        imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                    @Override
+                    public void onSuccess(Uri uri) {
+                        Picasso.get()
+                                .load(uri)
+                                .into(avatarImageView);
+
+                        Picasso.get().load(uri).into(new Target() {
+                            @Override
+                            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
+                                Bitmap bitmap2 = loadImageLocally("image_" + userId);
+                                saveImageLocally(bitmap, "image_" + userId);
+                                Log.d(TAG, "onSuccess: " + bitmap + "\n" + bitmap2);
+
+                            }
+                            @Override
+                            public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+                            }
+                            @Override
+                            public void onPrepareLoad(Drawable placeHolderDrawable) {
+
+                            }
+                        });
+
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+
+                    }
+                });
 
         // Обработчик нажатия кнопки смены имени
         changeNameButton.setOnClickListener(v -> {

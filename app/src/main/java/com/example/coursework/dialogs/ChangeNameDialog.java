@@ -1,4 +1,4 @@
-package com.example.coursework;
+package com.example.coursework.dialogs;
 
 import android.app.AlertDialog;
 import android.content.Context;

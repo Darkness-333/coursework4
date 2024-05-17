@@ -9,7 +9,9 @@
         android:layout_height="150dp"
         android:layout_marginTop="32dp"
         android:src="@drawable/user"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true"
+        android:scaleType="centerCrop"
+        />
 
     <TextView
         android:id="@+id/nameTextView"

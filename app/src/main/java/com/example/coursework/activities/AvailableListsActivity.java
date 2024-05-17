@@ -14,9 +14,9 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.example.coursework.AddQueueDialog;
+import com.example.coursework.dialogs.AddQueueDialog;
 import com.example.coursework.AvailableListsAdapter;
-import com.example.coursework.CreateQueueDialog;
+import com.example.coursework.dialogs.CreateQueueDialog;
 import com.example.coursework.databinding.ActivityAvailableListsBinding;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.FirebaseAuth;
@@ -39,6 +39,7 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
     DatabaseReference userListsIdRef;
     FirebaseDatabase database;
     ArrayAdapter<String> adapter;
+    String userId;
 
     String TAG="mylogs";
 
@@ -62,7 +63,7 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
 
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        String userId = firebaseUser.getUid();
+        userId = firebaseUser.getUid();
         // Получение доступных списков для текущего пользователя из базы данных Firebase
         database = FirebaseDatabase.getInstance();
         userListsIdRef = database.getReference("users").child(userId).child("listsId");
@@ -87,6 +88,12 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
             int completedChildrenCount = 0;
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (!dataSnapshot.exists()){
+                    progressBar.setVisibility(View.GONE);
+                    createButton.setEnabled(true);
+                    addButton.setEnabled(true);
+                    return;
+                }
 //                listsId.clear();
                 totalChildrenCount = (int) dataSnapshot.getChildrenCount();
                 // Получаем список всех id списка в snapshot, получаем конкретное id,
@@ -100,18 +107,13 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
                             if (snapshot.exists()){
-
-                                Log.d(TAG, "onDataChange: "+"exist");
                                 listsId.add(listId);
                                 String listName = snapshot.getValue(String.class);
-                                Log.d(TAG, "onDataChange: "+listName);
                                 listsName.add(listName);
                                 adapter.notifyDataSetChanged();
                             }
                             else{
-                                Log.d(TAG, "onDataChange: "+"not exist");
                                 needUpdateListsId=true;
-                                Log.d(TAG, "in else: "+needUpdateListsId);
                             }
 
                             completedChildrenCount++;
@@ -124,11 +126,6 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                                 addButton.setEnabled(true);
                             }
 
-//                            String listName = snapshot.getValue(String.class);
-//                            if (listName != null) {
-//                                listsName.add(listName);
-//                                adapter.notifyDataSetChanged();
-//                            }
                         }
                         @Override
                         public void onCancelled(@NonNull DatabaseError error) {
@@ -136,16 +133,6 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                         }
                     });
                 }
-//                Log.d(TAG, "before if: "+needUpdateListsId);
-//                if (needUpdateListsId){
-//                    Log.d(TAG, "onDataChange: "+"ok");
-//                    Log.d(TAG, "onDataChange: "+listsId);
-//                    userListsIdRef.setValue(listsId);
-//                }
-////                adapter.notifyDataSetChanged();
-//                progressBar.setVisibility(View.GONE);
-//                createButton.setEnabled(true);
-//                addButton.setEnabled(true);
             }
             @Override
             public void onCancelled(@NonNull DatabaseError databaseError) {
@@ -179,10 +166,15 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
         String listId=listsReference.push().getKey();
         // записываем имя списка с таким id в ссылке на все списки
         listsReference.child(listId).child("name").setValue(name);
+
         // добавляем id в список с id
         listsId.add(listId);
         // добавляем в ссылку со всеми id списков пользователя обновленный список
         userListsIdRef.setValue(listsId);
+
+        List<String> members=new ArrayList<>();
+        members.add(userId);
+        listsReference.child(listId).child("members").setValue(members);
 
         // записываем имя в отображаемый список
         listsName.add(name);
@@ -195,7 +187,7 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
         DatabaseReference nameRef=database.getReference("lists").child(listId).child("name");
         nameRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     // добавляем id в список с id
                     listsId.add(listId);
@@ -205,6 +197,28 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                     String listName=dataSnapshot.getValue(String.class);
                     listsName.add(listName);
                     adapter.notifyDataSetChanged();
+
+                    DatabaseReference listsReference=database.getReference("lists");
+                    DatabaseReference membersRef=listsReference.child(listId).child("members");
+
+                    membersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            List<String> members = new ArrayList<>();
+                            for (DataSnapshot elem : snapshot.getChildren()) {
+                                // Получение значений из снимка данных и добавление их в список строк
+                                String member = elem.getValue(String.class);
+                                members.add(member);
+                            }
+                            members.add(userId);
+                            membersRef.setValue(members);
+                        }
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+
                 }
                 else {
                     Snackbar.make(binding.getRoot(),"Неверный id",Snackbar.LENGTH_SHORT).show();

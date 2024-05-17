@@ -19,10 +19,14 @@ import androidx.appcompat.widget.PopupMenu;
 import com.example.coursework.activities.AvailableListsActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AvailableListsAdapter extends ArrayAdapter<String> {
@@ -43,18 +47,14 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
         TextView name = convertView.findViewById(R.id.name);
         ImageView control = convertView.findViewById(R.id.control);
 
-        number.setText(Integer.toString(position+1));
+//        number.setText(Integer.toString(position+1));
         name.setText(getItem(position));
 
+        int numberWidth = String.valueOf(getCount()).length(); // Ширина самого большого номера
+        String formattedNumber = String.format("%0" + numberWidth + "d", position + 1);
+        number.setText(formattedNumber);
 
 
-//        User user = getItem(position);
-//
-//        int numberWidth = String.valueOf(getCount()).length(); // Ширина самого большого номера
-//        String formattedNumber = String.format("%0" + numberWidth + "d", position + 1);
-//        number.setText(formattedNumber);
-//
-//        name.setText(user.getName());
         control.setOnClickListener(view -> {
             showPopupMenu(view, position);
         });
@@ -78,11 +78,12 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
         popupMenu.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             boolean needNotify = false;
+            String listId=listsId.get(position);
             if (id == R.id.action_get) {
 //                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
                 ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
                 // Создаем объект ClipData с нужным текстом
-                ClipData clip = ClipData.newPlainText("label", listsId.get(position));
+                ClipData clip = ClipData.newPlainText("label", listId);
                 // Копируем ClipData в буфер обмена
                 clipboard.setPrimaryClip(clip);
                 // Выводим уведомление о копировании
@@ -90,18 +91,45 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
             }
             else if (id == R.id.action_quit) {
 
-                // записываем имя в отображаемый список
-                // TODO: 02.05.2024 удалить список из доступных пользователю
+                DatabaseReference listsReference=database.getReference("lists");
+                DatabaseReference membersRef=listsReference.child(listId).child("members");
+
+                membersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        List<String> members = new ArrayList<>();
+                        for (DataSnapshot elem : snapshot.getChildren()) {
+                            // Получение значений из снимка данных и добавление их в список строк
+                            String member = elem.getValue(String.class);
+                            members.add(member);
+                        }
+                        if (members.size()==1){
+                            //удаление из всех списков
+                            DatabaseReference listsReference=database.getReference("lists").child(listId);
+                            listsReference.removeValue();
+                        }
+                        else{
+                            members.remove(userId);
+                            membersRef.setValue(members);
+                        }
+
+                    }
+                    @Override
+                    public void onCancelled(@NonNull DatabaseError error) {
+
+                    }
+                });
                 remove(currentQueue);
                 listsId.remove(position);
                 userListsIdRef.setValue(listsId);
                 needNotify = true;
+
+
             }
             else if (id == R.id.action_delete) {
-                // TODO: 02.05.2024 удалить список, и его id у всех участников 
                 remove(currentQueue);
                 //удаление из всех списков
-                DatabaseReference listsReference=database.getReference("lists").child(listsId.get(position));
+                DatabaseReference listsReference=database.getReference("lists").child(listId);
                 listsReference.removeValue();
                 //удаление у пользователя
                 listsId.remove(position);
@@ -116,4 +144,6 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
         });
         popupMenu.show();
     }
+
+
 }

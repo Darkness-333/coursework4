@@ -48,6 +48,7 @@ public class UserListActivity extends AppCompatActivity {
     List<User> userList; // хранить информацию о пользователях очереди
     UserListAdapter adapter;
     DatabaseReference dataRef; // ссылка на очередь в бд
+    FirebaseDatabase database;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -66,7 +67,7 @@ public class UserListActivity extends AppCompatActivity {
         listView.setAdapter(adapter);
 
         // получение ссылки из intent и передача ссылки в адаптер
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        database = FirebaseDatabase.getInstance();
         String listId=getIntent().getStringExtra("listId");
 
 
@@ -123,10 +124,6 @@ public class UserListActivity extends AppCompatActivity {
         });
 
         addButton.setOnClickListener(view -> {
-//            addYourself();
-//            // преобразуем список в json и отправляем изменения в бд
-//            String userListJson = gson.toJson(userList);
-//            dataRef.setValue(userListJson);
             listName.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -134,10 +131,9 @@ public class UserListActivity extends AppCompatActivity {
 
                     if (dataSnapshot.exists()) {
                         addYourself();
-                        String userListJson = gson.toJson(userList);
-                        dataRef.setValue(userListJson);
+
                     } else {
-                        Toast.makeText(getApplicationContext(),"Кажется очередь была удалена", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(),"Очередь была удалена", Toast.LENGTH_LONG).show();
                         listIdRef.removeValue();
                         startActivity(new Intent(UserListActivity.this,AvailableListsActivity.class));
                         finish();
@@ -150,6 +146,7 @@ public class UserListActivity extends AppCompatActivity {
             });
 
         });
+
 
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
@@ -195,25 +192,63 @@ public class UserListActivity extends AppCompatActivity {
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         String id = firebaseUser.getUid();
-        User newUser = new User("Ты");
-        newUser.setId(id);
 
-        // поиск пользователя в списке
-        boolean isUserInList = false;
-        for (User user : userList) {
-            if (user.getId() != null && user.getId().equals(id)) {
-                isUserInList = true;
-                break;
+        DatabaseReference userNameRef = database.getReference("users").child(id).child("name");
+        User newUser = new User();
+
+        userNameRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String name=snapshot.getValue(String.class);
+                newUser.setName(name);
+                newUser.setId(id);
+
+                // поиск пользователя в списке
+                boolean isUserInList = false;
+                for (User user : userList) {
+                    if (user.getId() != null && user.getId().equals(id)) {
+                        isUserInList = true;
+                        break;
+                    }
+                }
+                if (!isUserInList) {
+                    Gson gson = new Gson();
+//                    Snackbar.make(binding.getRoot(), "Добавлен", Snackbar.LENGTH_SHORT).show();
+                    userList.add(newUser);
+                    adapter.notifyDataSetChanged();
+                    String userListJson = gson.toJson(userList);
+                    dataRef.setValue(userListJson);
+                    showSnackbar("Добавлен", 500);
+                } else {
+                    showSnackbar("Уже в очереди", 100);
+                }
+
             }
-        }
-        if (!isUserInList) {
-            Snackbar.make(binding.getRoot(), "Добавлен", Snackbar.LENGTH_SHORT).show();
-            showSnackbar("Добавлен", 500);
-            userList.add(newUser);
-            adapter.notifyDataSetChanged();
-        } else {
-            showSnackbar("Уже в очереди", 100);
-        }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+//        User newUser = new User("Ты");
+//        newUser.setId(id);
+//
+//        // поиск пользователя в списке
+//        boolean isUserInList = false;
+//        for (User user : userList) {
+//            if (user.getId() != null && user.getId().equals(id)) {
+//                isUserInList = true;
+//                break;
+//            }
+//        }
+//        if (!isUserInList) {
+//            Snackbar.make(binding.getRoot(), "Добавлен", Snackbar.LENGTH_SHORT).show();
+//            showSnackbar("Добавлен", 500);
+//            userList.add(newUser);
+//            adapter.notifyDataSetChanged();
+//        } else {
+//            showSnackbar("Уже в очереди", 100);
+//        }
     }
 
     public void showSnackbar(String text, int duration) {
