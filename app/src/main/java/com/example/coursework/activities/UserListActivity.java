@@ -2,15 +2,18 @@ package com.example.coursework.activities;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import android.content.ClipData;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.DragEvent;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -18,6 +21,8 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.example.coursework.MembersListFragment;
+import com.example.coursework.NetworkChangeReceiver;
 import com.example.coursework.R;
 import com.example.coursework.User;
 import com.example.coursework.UserListAdapter;
@@ -49,6 +54,16 @@ public class UserListActivity extends AppCompatActivity {
     UserListAdapter adapter;
     DatabaseReference dataRef; // ссылка на очередь в бд
     FirebaseDatabase database;
+    private NetworkChangeReceiver networkChangeReceiver;
+
+    boolean showMemberListFragment=true;
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(networkChangeReceiver, filter);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,39 +80,58 @@ public class UserListActivity extends AppCompatActivity {
         userList = new ArrayList<>();
         adapter = new UserListAdapter(this, userList);
         listView.setAdapter(adapter);
+        networkChangeReceiver = new NetworkChangeReceiver(adapter);
 
         // получение ссылки из intent и передача ссылки в адаптер
+//        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         database = FirebaseDatabase.getInstance();
-        String listId=getIntent().getStringExtra("listId");
+        String listId = getIntent().getStringExtra("listId");
 
-
-        DatabaseReference listIdRef=database.getReference("lists").child(listId);
-        DatabaseReference listName=listIdRef.child("name");
+        DatabaseReference listIdRef = database.getReference("lists").child(listId);
+        DatabaseReference listName = listIdRef.child("name");
         dataRef = listIdRef.child("data");
         adapter.setDatabaseReference(listIdRef);
 
         Gson gson = new Gson();
 
+
+        MembersListFragment fragment = new MembersListFragment();
+        FragmentManager manager = getSupportFragmentManager();
+        FragmentTransaction trans = manager.beginTransaction(); // Добавляем фрагмент изначально, но скрываем его
+        trans.add(R.id.fragment, fragment);
+        trans.hide(fragment);
+        trans.commit();
+
+        binding.members.setOnClickListener(view -> {
+            FragmentTransaction transaction = manager.beginTransaction();
+            if (showMemberListFragment) {
+                transaction.show(fragment);
+                binding.content.setVisibility(View.GONE);
+            } else {
+                transaction.hide(fragment);
+                binding.content.setVisibility(View.VISIBLE);
+            }
+            transaction.commit();
+            showMemberListFragment = !showMemberListFragment;
+        });
+
         listIdRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (!snapshot.exists()){
-                    Toast.makeText(getApplicationContext(),"Кажется очередь была удалена", Toast.LENGTH_LONG).show();
-                    startActivity(new Intent(UserListActivity.this,AvailableListsActivity.class));
+                if (!snapshot.exists()) {
+                    Toast.makeText(getApplicationContext(), "Кажется очередь была удалена", Toast.LENGTH_LONG).show();
+                    startActivity(new Intent(UserListActivity.this, AvailableListsActivity.class));
                     finish();
                 }
             }
-
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
 
         dataRef.addValueEventListener(new ValueEventListener() {
             @Override
-            public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()){
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()) {
                     // получение json с информацией о пользователях в очереди
                     String data = dataSnapshot.getValue(String.class);
                     Type userListType = new TypeToken<List<User>>() {
@@ -107,11 +141,11 @@ public class UserListActivity extends AppCompatActivity {
                     userList.addAll(updatedUserList); // Добавляем все элементы из нового списка
                     adapter.notifyDataSetChanged();
                 }
-
+                if (NetworkChangeReceiver.isConnected) {
+                    addButton.setEnabled(true);
+                }
                 progressBar.setVisibility(View.GONE);
-                addButton.setEnabled(true);
             }
-
             @Override
             public void onCancelled(DatabaseError error) {
                 Log.d(TAG, "Failed to read value.", error.toException());
@@ -127,26 +161,19 @@ public class UserListActivity extends AppCompatActivity {
             listName.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                    Log.d(TAG, "showPopupMenu: "+dataSnapshot);
-
                     if (dataSnapshot.exists()) {
                         addYourself();
-
                     } else {
-                        Toast.makeText(getApplicationContext(),"Очередь была удалена", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(), "Очередь была удалена", Toast.LENGTH_LONG).show();
                         listIdRef.removeValue();
-                        startActivity(new Intent(UserListActivity.this,AvailableListsActivity.class));
+                        startActivity(new Intent(UserListActivity.this, AvailableListsActivity.class));
                         finish();
                     }
                 }
                 @Override
-                public void onCancelled(@NonNull DatabaseError error) {
-
-                }
+                public void onCancelled(@NonNull DatabaseError error) {}
             });
-
         });
-
 
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
@@ -163,11 +190,11 @@ public class UserListActivity extends AppCompatActivity {
             public boolean onDrag(View v, DragEvent event) {
                 switch (event.getAction()) {
                     case DragEvent.ACTION_DROP:
-                        // Получите позиции элементов списка и выполните перемещение
+                        // получаем позиции элементов списка и выполните перемещение
                         int positionFrom = (int) event.getLocalState();
                         int positionTo = listView.pointToPosition((int) event.getX(), (int) event.getY());
                         if (positionTo != ListView.INVALID_POSITION) {
-                            // Поменяйте местами элементы в списке данных
+                            // меняем местами элементы в списке данных
                             User item = adapter.getItem(positionFrom);
                             adapter.remove(item);
                             adapter.insert(item, positionTo);
@@ -185,8 +212,6 @@ public class UserListActivity extends AppCompatActivity {
 
     }
 
-
-
     public void addYourself() {
         //получение id пользователя
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
@@ -199,7 +224,7 @@ public class UserListActivity extends AppCompatActivity {
         userNameRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                String name=snapshot.getValue(String.class);
+                String name = snapshot.getValue(String.class);
                 newUser.setName(name);
                 newUser.setId(id);
 
@@ -222,33 +247,10 @@ public class UserListActivity extends AppCompatActivity {
                 } else {
                     showSnackbar("Уже в очереди", 100);
                 }
-
             }
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
+            public void onCancelled(@NonNull DatabaseError error) {}
         });
-
-//        User newUser = new User("Ты");
-//        newUser.setId(id);
-//
-//        // поиск пользователя в списке
-//        boolean isUserInList = false;
-//        for (User user : userList) {
-//            if (user.getId() != null && user.getId().equals(id)) {
-//                isUserInList = true;
-//                break;
-//            }
-//        }
-//        if (!isUserInList) {
-//            Snackbar.make(binding.getRoot(), "Добавлен", Snackbar.LENGTH_SHORT).show();
-//            showSnackbar("Добавлен", 500);
-//            userList.add(newUser);
-//            adapter.notifyDataSetChanged();
-//        } else {
-//            showSnackbar("Уже в очереди", 100);
-//        }
     }
 
     public void showSnackbar(String text, int duration) {
@@ -257,22 +259,4 @@ public class UserListActivity extends AppCompatActivity {
         snackbar.show();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-        Intent intent = new Intent(this, AboutActivity.class);
-        if (id == R.id.about_author) {
-            intent.putExtra("info", "author");
-        } else if (id == R.id.about_app) {
-            intent.putExtra("info", "app");
-        }
-        startActivity(intent);
-        return super.onOptionsItemSelected(item);
-    }
 }

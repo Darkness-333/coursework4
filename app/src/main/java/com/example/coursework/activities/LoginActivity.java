@@ -17,6 +17,7 @@ import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -33,6 +34,9 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding=ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+//        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
+
 
         // Инициализация Firebase Authentication
         mAuth = FirebaseAuth.getInstance();
@@ -73,15 +77,6 @@ public class LoginActivity extends AppCompatActivity {
             FirebaseUser currentUser = mAuth.getCurrentUser();
             updateUI(currentUser);
         }
-//        if ( getIntent() == null){
-//            FirebaseUser currentUser = mAuth.getCurrentUser();
-//
-//            updateUI(currentUser);
-//        }
-        // Check if user is signed in (non-null) and update UI accordingly.
-//        FirebaseUser currentUser = mAuth.getCurrentUser();
-//
-//        updateUI(currentUser);
     }
 
     private void updateUI(FirebaseUser currentUser) {

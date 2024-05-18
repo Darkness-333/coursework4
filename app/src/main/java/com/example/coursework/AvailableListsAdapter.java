@@ -47,6 +47,14 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
         TextView name = convertView.findViewById(R.id.name);
         ImageView control = convertView.findViewById(R.id.control);
 
+
+        boolean isConnected=NetworkChangeReceiver.isConnected;
+        if (isConnected) {
+            control.setVisibility(View.VISIBLE);
+        } else {
+            control.setVisibility(View.INVISIBLE);
+        }
+
 //        number.setText(Integer.toString(position+1));
         name.setText(getItem(position));
 

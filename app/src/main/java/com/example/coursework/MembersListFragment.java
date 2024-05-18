@@ -1,64 +1,111 @@
 package com.example.coursework;
 
+import android.content.ClipData;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import android.util.Log;
+import android.view.DragEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.ListView;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link MembersListFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class MembersListFragment extends Fragment {
+import com.example.coursework.activities.AvailableListsActivity;
+import com.example.coursework.activities.UserListActivity;
+import com.example.coursework.databinding.ActivityUserListBinding;
+import com.example.coursework.databinding.FragmentMembersListBinding;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
 
-    public MembersListFragment() {
-        // Required empty public constructor
-    }
+public class MembersListFragment extends Fragment  {
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment MembersListFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static MembersListFragment newInstance(String param1, String param2) {
-        MembersListFragment fragment = new MembersListFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
+    FragmentMembersListBinding binding;
+
+    //    List<User> userList; // хранить информацию о пользователях очереди
+    UserListAdapter adapter;
+//    DatabaseReference dataRef; // ссылка на очередь в бд
+//    FirebaseDatabase database;
+//    private NetworkChangeReceiver networkChangeReceiver;
+
 
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
+//        networkChangeReceiver = new NetworkChangeReceiver(this);
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_members_list, container, false);
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        binding = FragmentMembersListBinding.inflate(inflater, container, false);
+        return binding.getRoot();
     }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        ListView listView = binding.list;
+
+        ArrayList<User> userList = new ArrayList<>();
+        adapter = new UserListAdapter(getContext(), userList);
+        adapter.setWorkWithUsers(false);
+        listView.setAdapter(adapter);
+
+        // получение ссылки из intent и передача ссылки в адаптер
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        String listId = getActivity().getIntent().getStringExtra("listId");
+
+        DatabaseReference listIdRef = database.getReference("lists").child(listId);
+        DatabaseReference membersRef = listIdRef.child("members");
+        adapter.setDatabaseReference(listIdRef);
+
+        Gson gson = new Gson();
+
+        membersRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                List<User> members = new ArrayList<>();
+                for (DataSnapshot elem : snapshot.getChildren()) {
+                    // Получение значений из снимка данных и добавление их в список строк
+                    String memberId = elem.getValue(String.class);
+                    User newUser = new User();
+                    newUser.setId(memberId);
+                    members.add(newUser);
+                }
+                userList.clear(); // Очищаем текущий список
+                userList.addAll(members); // Добавляем все элементы из нового списка
+                adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
+
+
+    }
+
+
 }

@@ -12,7 +12,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -25,6 +24,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.coursework.AboutAuthorActivity;
 import com.example.coursework.R;
 import com.example.coursework.databinding.ActivityProfileBinding;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -43,7 +43,6 @@ import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -263,13 +262,13 @@ public class ProfileActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
-        Intent intent = new Intent(this, AboutActivity.class);
         if (id == R.id.about_author) {
-            intent.putExtra("info", "author");
+            Intent intent = new Intent(this, AboutAuthorActivity.class);
+            startActivity(intent);
         } else if (id == R.id.about_app) {
-            intent.putExtra("info", "app");
+            Intent intent = new Intent(this, AboutProgramActivity.class);
+            startActivity(intent);
         }
-        startActivity(intent);
         return super.onOptionsItemSelected(item);
     }
 }

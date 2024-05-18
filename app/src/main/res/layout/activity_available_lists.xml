@@ -15,10 +15,18 @@
     android:layout_height="wrap_content">
 
     <ImageView
+        android:id="@+id/no_internet"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_centerHorizontal="true"
+        android:src="@drawable/no_internet"
+        android:visibility="gone"
+        />
+
+    <ImageView
         android:id="@+id/profile"
         android:layout_width="40dp"
         android:layout_height="40dp"
-
         android:layout_alignParentEnd="true"
         android:src="@drawable/user" />
 

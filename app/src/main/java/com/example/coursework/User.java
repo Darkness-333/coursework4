@@ -4,13 +4,9 @@ import java.io.Serializable;
 
 public class User implements Serializable {
     private String name;
-    private int avatarImage;
     private String id;
 
-    public User(){
-
-    }
-
+    public User(){}
     public User(String name) {
         this.name = name;
     }
@@ -31,7 +27,4 @@ public class User implements Serializable {
         return id;
     }
 
-    public void setAvatarImage(int avatarImage) {
-        this.avatarImage = avatarImage;
-    }
 }

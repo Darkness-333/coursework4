@@ -4,6 +4,8 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -14,6 +16,7 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.example.coursework.NetworkChangeReceiver;
 import com.example.coursework.dialogs.AddQueueDialog;
 import com.example.coursework.AvailableListsAdapter;
 import com.example.coursework.dialogs.CreateQueueDialog;
@@ -42,6 +45,14 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
     String userId;
 
     String TAG="mylogs";
+    private NetworkChangeReceiver networkChangeReceiver;
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);
+        registerReceiver(networkChangeReceiver, filter);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,9 +60,13 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
         binding=ActivityAvailableListsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+
+
         listView = binding.list;
         adapter = new AvailableListsAdapter(AvailableListsActivity.this, listsName, listsId);
         listView.setAdapter(adapter);
+
+        networkChangeReceiver= new NetworkChangeReceiver(adapter);
 
         Button createButton=binding.createQueue;
         createButton.setEnabled(false);
@@ -64,7 +79,9 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         userId = firebaseUser.getUid();
+
         // Получение доступных списков для текущего пользователя из базы данных Firebase
+        // синхронизация с интернетом
         database = FirebaseDatabase.getInstance();
         userListsIdRef = database.getReference("users").child(userId).child("listsId");
 
@@ -89,9 +106,11 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (!dataSnapshot.exists()){
+                    if (NetworkChangeReceiver.isConnected){
+                        createButton.setEnabled(true);
+                        addButton.setEnabled(true);
+                    }
                     progressBar.setVisibility(View.GONE);
-                    createButton.setEnabled(true);
-                    addButton.setEnabled(true);
                     return;
                 }
 //                listsId.clear();
@@ -121,9 +140,11 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                                 if (needUpdateListsId) {
                                     userListsIdRef.setValue(listsId);
                                 }
+                                if (NetworkChangeReceiver.isConnected){
+                                    createButton.setEnabled(true);
+                                    addButton.setEnabled(true);
+                                }
                                 progressBar.setVisibility(View.GONE);
-                                createButton.setEnabled(true);
-                                addButton.setEnabled(true);
                             }
 
                         }
@@ -214,9 +235,7 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                             membersRef.setValue(members);
                         }
                         @Override
-                        public void onCancelled(@NonNull DatabaseError error) {
-
-                        }
+                        public void onCancelled(@NonNull DatabaseError error) {}
                     });
 
                 }
@@ -224,9 +243,8 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                     Snackbar.make(binding.getRoot(),"Неверный id",Snackbar.LENGTH_SHORT).show();
                 }
             }
-
             @Override
-            public void onCancelled(DatabaseError databaseError) {
+            public void onCancelled(@NonNull DatabaseError databaseError) {
                 Toast.makeText(AvailableListsActivity.this, "Failed to read value.", Toast.LENGTH_SHORT).show();
             }
         });

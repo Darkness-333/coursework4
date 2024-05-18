@@ -2,4 +2,6 @@
     <string name="app_name">Queue Manager</string>
     <string name="about_author">Информация об авторе</string>
     <string name="about_app">Информация о программе</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
