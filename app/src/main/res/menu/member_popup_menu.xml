@@ -5,9 +5,11 @@
         android:title="Добавить в очередь"
         />
     <item
+        android:id="@+id/action_admin"
+        android:title="Сделать админом"
+        />
+    <item
         android:id="@+id/action_delete"
         android:title="Удалить участника"
-
-
         />
 </menu>

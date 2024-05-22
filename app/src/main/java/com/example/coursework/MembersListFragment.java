@@ -75,6 +75,8 @@ public class MembersListFragment extends Fragment {
         adapter.setWorkWithUsers(false);
         listView.setAdapter(adapter);
 
+
+
         // получение ссылки из intent и передача ссылки в адаптер
         FirebaseDatabase database = FirebaseDatabase.getInstance();
         String listId = getActivity().getIntent().getStringExtra("listId");
@@ -102,7 +104,7 @@ public class MembersListFragment extends Fragment {
                     userList.clear(); // Очищаем текущий список
                     userList.addAll(members); // Добавляем все элементы из нового списка
                     adapter.notifyDataSetChanged();
-
+//                    ((UserListActivity) getActivity()).adapter.notifyDataSetChanged();
                     for (User member : members) {
                         if (member.getId().equals(userId)) {
                             boolean isAdmin = member.getAdmin();

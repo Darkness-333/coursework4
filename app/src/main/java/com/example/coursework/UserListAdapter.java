@@ -82,7 +82,7 @@ public class UserListAdapter extends ArrayAdapter<User> implements ChangeNameDia
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         userId = firebaseUser.getUid();
-        gson=new Gson();
+        gson = new Gson();
     }
 
 
@@ -143,7 +143,7 @@ public class UserListAdapter extends ArrayAdapter<User> implements ChangeNameDia
                         try {
                             Picasso.get()
                                     .load(uri)
-                                    .resize(100,100)
+                                    .resize(100, 100)
                                     .centerCrop()
                                     .into(avatar);
                         } catch (Exception e) {
@@ -250,11 +250,10 @@ public class UserListAdapter extends ArrayAdapter<User> implements ChangeNameDia
             popupMenu.setOnMenuItemClickListener(item -> {
 
 
-
                 int id = item.getItemId();
-                User selectedUser=users.get(position);
-                String selectedUserId=selectedUser.getId();
-                String selectedUserName=selectedUser.getName();
+                User selectedUser = users.get(position);
+                String selectedUserId = selectedUser.getId();
+                String selectedUserName = selectedUser.getName();
                 if (id == R.id.action_add) {
                     User newUser = new User();
                     listIdRef.child("data").addListenerForSingleValueEvent(new ValueEventListener() {
@@ -283,18 +282,45 @@ public class UserListAdapter extends ArrayAdapter<User> implements ChangeNameDia
                                 notifyDataSetChanged();
                                 String userListJson = gson.toJson(updatedUserList);
                                 listIdRef.child("data").setValue(userListJson);
-                                Toast.makeText(getContext(),"Добавлен",Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getContext(), "Добавлен", Toast.LENGTH_SHORT).show();
                             } else {
-                                Toast.makeText(getContext(),"Уже в очереди",Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getContext(), "Уже в очереди", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                        }
+                    });
+                } else if (id == R.id.action_admin) {
+                    DatabaseReference membersRef = listIdRef.child("members");
+                    membersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            if (snapshot.exists()) {
+                                List<User> members;
+                                String membersJson = snapshot.getValue(String.class);
+                                Type userListType = new TypeToken<ArrayList<User>>() {
+                                }.getType();
+                                members = gson.fromJson(membersJson, userListType);
+                                for(User member:members){
+                                    if (member.getId().equals(selectedUserId)){
+                                        member.setAdmin(true);
+                                    }
+                                }
+                                String newMembersJson = gson.toJson(members);
+                                membersRef.setValue(newMembersJson);
+
                             }
                         }
                         @Override
                         public void onCancelled(@NonNull DatabaseError error) {}
                     });
+
                 } else if (id == R.id.action_delete) {
 
 
-                    DatabaseReference membersRef= listIdRef.child("members");
+                    DatabaseReference membersRef = listIdRef.child("members");
                     membersRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -320,8 +346,10 @@ public class UserListAdapter extends ArrayAdapter<User> implements ChangeNameDia
                                 }
                             }
                         }
+
                         @Override
-                        public void onCancelled(@NonNull DatabaseError error) {}
+                        public void onCancelled(@NonNull DatabaseError error) {
+                        }
                     });
                 }
                 return true;

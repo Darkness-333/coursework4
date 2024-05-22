@@ -175,6 +175,7 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                 // Переход к активности с содержимым выбранного списка
                 Intent intent = new Intent(AvailableListsActivity.this, UserListActivity.class);
                 intent.putExtra("listId", listsId.get(position));
+                intent.putExtra("listName", listsName.get(position));
                 startActivity(intent);
             }
         });

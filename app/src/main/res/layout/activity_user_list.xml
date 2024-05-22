@@ -24,6 +24,15 @@
             android:visibility="gone"
             />
 
+        <TextView
+            android:id="@+id/name"
+            android:textSize="20sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerInParent="true"
+            android:text="Название"
+            />
+
         <ImageView
             android:id="@+id/back"
             android:layout_width="40dp"

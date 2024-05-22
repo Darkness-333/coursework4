@@ -2,13 +2,18 @@ package com.example.coursework.activities;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ClipData;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.DragEvent;
@@ -36,6 +41,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -52,7 +59,7 @@ public class UserListActivity extends AppCompatActivity {
     ActivityUserListBinding binding;
     String TAG = "mylogs";
     List<User> userList; // хранить информацию о пользователях очереди
-    UserListAdapter adapter;
+    public UserListAdapter adapter;
     DatabaseReference dataRef; // ссылка на очередь в бд
     FirebaseDatabase database;
     private NetworkChangeReceiver networkChangeReceiver;
@@ -64,6 +71,7 @@ public class UserListActivity extends AppCompatActivity {
     public void setIsAdmin(boolean admin) {
         isAdmin = admin;
         adapter.setIsAdmin(admin);
+        adapter.notifyDataSetChanged();
     }
 
     @Override
@@ -94,10 +102,12 @@ public class UserListActivity extends AppCompatActivity {
 //        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
         database = FirebaseDatabase.getInstance();
         String listId = getIntent().getStringExtra("listId");
+        String listName = getIntent().getStringExtra("listName");
+        binding.name.setText(listName);
 
         DatabaseReference listIdRef = database.getReference("lists").child(listId);
         DatabaseReference membersRef = listIdRef.child("members");
-        DatabaseReference listName = listIdRef.child("name");
+        DatabaseReference listNameRef = listIdRef.child("name");
         dataRef = listIdRef.child("data");
         adapter.setDatabaseReference(listIdRef);
 
@@ -198,9 +208,16 @@ public class UserListActivity extends AppCompatActivity {
                     Type userListType = new TypeToken<List<User>>() {
                     }.getType();
                     List<User> updatedUserList = gson.fromJson(data, userListType);
+
                     userList.clear(); // Очищаем текущий список
                     userList.addAll(updatedUserList); // Добавляем все элементы из нового списка
                     adapter.notifyDataSetChanged();
+
+//                    boolean isFirstUser = !updatedUserList.isEmpty() && updatedUserList.get(0).getId().equals(userId);
+//                    if (isFirstUser) {
+////                        showSnackbar("Первый", 1000);
+//                        showNotification("Очередь \""+listName+"\"", "Вы первый в очереди.");
+//                    }
                 }
                 if (NetworkChangeReceiver.isConnected) {
                     addButton.setEnabled(true);
@@ -220,7 +237,7 @@ public class UserListActivity extends AppCompatActivity {
         });
 
         addButton.setOnClickListener(view -> {
-            listName.addListenerForSingleValueEvent(new ValueEventListener() {
+            listNameRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                     if (dataSnapshot.exists()) {
@@ -277,6 +294,27 @@ public class UserListActivity extends AppCompatActivity {
 
     }
 
+    private void showNotification(String title, String message) {
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        String channelId = "user_queue_channel";
+        String channelName = "User Queue Notifications";
+        int importance = NotificationManager.IMPORTANCE_HIGH;
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(channelId, channelName, importance);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext(), channelId)
+                .setSmallIcon(R.drawable.queue_icon)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true);
+
+        notificationManager.notify(1, builder.build());
+    }
+
     public void addYourself() {
         //получение id пользователя
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
@@ -294,25 +332,62 @@ public class UserListActivity extends AppCompatActivity {
 //                newUser.setName(name);
                 newUser.setId(userId);
 
-                // поиск пользователя в списке
-                boolean isUserInList = false;
-                for (User user : userList) {
-                    if (user.getId() != null && user.getId().equals(userId)) {
-                        isUserInList = true;
-                        break;
+                dataRef.runTransaction(new Transaction.Handler() {
+                    @NonNull
+                    @Override
+                    public Transaction.Result doTransaction(@NonNull MutableData currentData) {
+                        Gson gson = new Gson();
+                        List<User> userList = new ArrayList<>();
+                        if (currentData.getValue() != null) {
+                            String json = currentData.getValue(String.class);
+                            userList = gson.fromJson(json, new TypeToken<List<User>>(){}.getType());
+                        }
+
+                        boolean isUserInList = false;
+                        for (User user : userList) {
+                            if (user.getId() != null && user.getId().equals(userId)) {
+                                isUserInList = true;
+                                break;
+                            }
+                        }
+                        if (!isUserInList) {
+                            userList.add(newUser);
+                            String userListJson = gson.toJson(userList);
+                            currentData.setValue(userListJson);
+                        }
+                        return Transaction.success(currentData);
                     }
-                }
-                if (!isUserInList) {
-                    Gson gson = new Gson();
-//                    Snackbar.make(binding.getRoot(), "Добавлен", Snackbar.LENGTH_SHORT).show();
-                    userList.add(newUser);
-                    adapter.notifyDataSetChanged();
-                    String userListJson = gson.toJson(userList);
-                    dataRef.setValue(userListJson);
-                    showSnackbar("Добавлен", 500);
-                } else {
-                    showSnackbar("Уже в очереди", 100);
-                }
+
+                    @Override
+                    public void onComplete(DatabaseError databaseError, boolean committed, DataSnapshot currentData) {
+                        if (committed) {
+                            adapter.notifyDataSetChanged();
+                            showSnackbar("Добавлен", 500);
+                        } else {
+                            showSnackbar("Уже в очереди или произошла ошибка", 100);
+                        }
+                    }
+                });
+
+//                // поиск пользователя в списке
+//                boolean isUserInList = false;
+//                for (User user : userList) {
+//                    if (user.getId() != null && user.getId().equals(userId)) {
+//                        isUserInList = true;
+//                        break;
+//                    }
+//                }
+//                if (!isUserInList) {
+//                    Gson gson = new Gson();
+////                    Snackbar.make(binding.getRoot(), "Добавлен", Snackbar.LENGTH_SHORT).show();
+//                    userList.add(newUser);
+//                    adapter.notifyDataSetChanged();
+//                    String userListJson = gson.toJson(userList);
+//                    dataRef.setValue(userListJson);
+//                    showSnackbar("Добавлен", 500);
+//                } else {
+//                    showSnackbar("Уже в очереди", 100);
+//                }
             }
 
             @Override

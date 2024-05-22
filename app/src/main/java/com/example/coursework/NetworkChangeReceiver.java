@@ -49,9 +49,11 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
         else if(activity instanceof UserListActivity){
             if (isConnected) {
                 activity.findViewById(R.id.no_internet).setVisibility(View.GONE); // Скрываем иконку при наличии интернета
+                activity.findViewById(R.id.name).setVisibility(View.VISIBLE); // Скрываем иконку при наличии интернета
                 activity.findViewById(R.id.add).setEnabled(true);
             } else {
                 activity.findViewById(R.id.no_internet).setVisibility(View.VISIBLE); // Показываем иконку при отсутствии интернета
+                activity.findViewById(R.id.name).setVisibility(View.GONE); // Показываем иконку при отсутствии интернета
                 activity.findViewById(R.id.add).setEnabled(false);
             }
         }

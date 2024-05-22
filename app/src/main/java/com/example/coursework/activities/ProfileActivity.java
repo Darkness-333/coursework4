@@ -28,6 +28,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.coursework.AboutAuthorActivity;
 import com.example.coursework.R;
+import com.example.coursework.UserPositionService;
 import com.example.coursework.databinding.ActivityProfileBinding;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -76,6 +77,10 @@ public class ProfileActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityProfileBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+
+        Intent serviceIntent = new Intent(this, UserPositionService.class);
+        startService(serviceIntent);
 
         // Привязка элементов макета к переменным
         editTextName = binding.editTextName;
