@@ -42,6 +42,7 @@ import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class UserListActivity extends AppCompatActivity {
@@ -56,7 +57,14 @@ public class UserListActivity extends AppCompatActivity {
     FirebaseDatabase database;
     private NetworkChangeReceiver networkChangeReceiver;
 
-    boolean showMemberListFragment=true;
+    boolean showMemberListFragment = true;
+    boolean isAdmin = false;
+    String userId;
+
+    public void setIsAdmin(boolean admin) {
+        isAdmin = admin;
+        adapter.setIsAdmin(admin);
+    }
 
     @Override
     protected void onStart() {
@@ -88,9 +96,15 @@ public class UserListActivity extends AppCompatActivity {
         String listId = getIntent().getStringExtra("listId");
 
         DatabaseReference listIdRef = database.getReference("lists").child(listId);
+        DatabaseReference membersRef = listIdRef.child("members");
         DatabaseReference listName = listIdRef.child("name");
         dataRef = listIdRef.child("data");
         adapter.setDatabaseReference(listIdRef);
+
+
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        userId = firebaseUser.getUid();
 
         Gson gson = new Gson();
 
@@ -115,17 +129,64 @@ public class UserListActivity extends AppCompatActivity {
             showMemberListFragment = !showMemberListFragment;
         });
 
+        membersRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    List<User> members;
+                    String membersJson = snapshot.getValue(String.class);
+                    Type userListType = new TypeToken<ArrayList<User>>() {
+                    }.getType();
+                    members = gson.fromJson(membersJson, userListType);
+                    boolean inQueue = false;
+                    for (User member : members) {
+                        if (member.getId().equals(userId)) {
+                            inQueue = true;
+                            break;
+                        }
+                    }
+                    if(!inQueue && NetworkChangeReceiver.isConnected){
+                        DatabaseReference userListsIdRef=database.getReference("users").child(userId).child("listsId");
+                        userListsIdRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                List<String> listsId=new ArrayList<>();
+                                for (DataSnapshot data : snapshot.getChildren()) {
+                                    String curListId =data.getValue(String.class);
+                                    listsId.add(curListId);
+                                }
+                                listsId.remove(listId);
+                                userListsIdRef.setValue(listsId);
+                                startActivity(new Intent(UserListActivity.this, AvailableListsActivity.class));
+                                finish();
+                                Toast.makeText(getApplicationContext(),"Вы были удалены из очереди",Toast.LENGTH_LONG).show();
+
+                            }
+
+                            @Override
+                            public void onCancelled(@NonNull DatabaseError error) {}
+                        });
+                    }
+                }
+            }
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+        });
+
         listIdRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (!snapshot.exists()) {
-                    Toast.makeText(getApplicationContext(), "Кажется очередь была удалена", Toast.LENGTH_LONG).show();
+                    Toast.makeText(getApplicationContext(), "Очередь была удалена", Toast.LENGTH_LONG).show();
                     startActivity(new Intent(UserListActivity.this, AvailableListsActivity.class));
                     finish();
                 }
             }
+
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
         });
 
         dataRef.addValueEventListener(new ValueEventListener() {
@@ -146,6 +207,7 @@ public class UserListActivity extends AppCompatActivity {
                 }
                 progressBar.setVisibility(View.GONE);
             }
+
             @Override
             public void onCancelled(DatabaseError error) {
                 Log.d(TAG, "Failed to read value.", error.toException());
@@ -170,14 +232,17 @@ public class UserListActivity extends AppCompatActivity {
                         finish();
                     }
                 }
+
                 @Override
-                public void onCancelled(@NonNull DatabaseError error) {}
+                public void onCancelled(@NonNull DatabaseError error) {
+                }
             });
         });
 
         listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                if (!isAdmin) return false;
                 ClipData data = ClipData.newPlainText("", "");
                 View.DragShadowBuilder shadowBuilder = new View.DragShadowBuilder(view);
                 view.startDragAndDrop(data, shadowBuilder, position, 0);
@@ -216,22 +281,23 @@ public class UserListActivity extends AppCompatActivity {
         //получение id пользователя
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
-        String id = firebaseUser.getUid();
+        userId = firebaseUser.getUid();
 
-        DatabaseReference userNameRef = database.getReference("users").child(id).child("name");
+        DatabaseReference userNameRef = database.getReference("users").child(userId).child("name");
         User newUser = new User();
 
         userNameRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String name = snapshot.getValue(String.class);
-                newUser.setName(name);
-                newUser.setId(id);
+                // имя совпадает с указанным в профиле
+//                newUser.setName(name);
+                newUser.setId(userId);
 
                 // поиск пользователя в списке
                 boolean isUserInList = false;
                 for (User user : userList) {
-                    if (user.getId() != null && user.getId().equals(id)) {
+                    if (user.getId() != null && user.getId().equals(userId)) {
                         isUserInList = true;
                         break;
                     }
@@ -248,8 +314,10 @@ public class UserListActivity extends AppCompatActivity {
                     showSnackbar("Уже в очереди", 100);
                 }
             }
+
             @Override
-            public void onCancelled(@NonNull DatabaseError error) {}
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
         });
     }
 

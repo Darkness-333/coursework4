@@ -9,6 +9,8 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -42,10 +44,16 @@ import com.google.firebase.storage.UploadTask;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class ProfileActivity extends AppCompatActivity {
 
@@ -119,24 +127,26 @@ public class ProfileActivity extends AppCompatActivity {
             }
         });
 
+
         imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
-                        Picasso.get()
-                                .load(uri)
-                                .into(avatarImageView);
+//                        Picasso.get()
+//                                .load(uri)
+//                                .resize(150, 150)
+//                                .centerCrop()
+//                                .into(avatarImageView);
 
                         Picasso.get().load(uri).into(new Target() {
                             @Override
                             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                                Bitmap bitmap2 = loadImageLocally("image_" + userId);
                                 saveImageLocally(bitmap, "image_" + userId);
-                                Log.d(TAG, "onSuccess: " + bitmap + "\n" + bitmap2);
-
                             }
+
                             @Override
                             public void onBitmapFailed(Exception e, Drawable errorDrawable) {
                             }
+
                             @Override
                             public void onPrepareLoad(Drawable placeHolderDrawable) {
 
@@ -207,48 +217,69 @@ public class ProfileActivity extends AppCompatActivity {
 
     }
 
+
+//    private void saveImageLocally(Bitmap bitmap, String fileName) {
+//        try (FileOutputStream fos = openFileOutput(fileName, Context.MODE_PRIVATE)) {
+//            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
+    private void saveImageLocally(Bitmap bitmap, String fileName) {
+        new Thread(() -> {
+            try {
+                // Создаем временный файл для временного сохранения изображения
+                File tempFile = new File(getFilesDir(), fileName + ".temp");
+                // Сохраняем изображение во временный файл
+                try (FileOutputStream fos = new FileOutputStream(tempFile);
+                     BufferedOutputStream bos = new BufferedOutputStream(fos)) {
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 80, bos);
+                    bos.flush();
+                }
+                // Если успешно сохранили во временный файл, переименовываем его в конечный файл
+                File finalFile = new File(getFilesDir(), fileName);
+                if (tempFile.renameTo(finalFile)) {
+                    // Полное сохранение: удаление временного файла
+                    tempFile.delete();
+                } else {
+                    // Отмена всех изменений: удаляем временный файл и обрабатываем ошибку
+                    tempFile.delete();
+                    throw new IOException("Failed to rename temp file to final file.");
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }).start();
+
+//        new Thread(() -> {
+//            try (FileOutputStream fos = openFileOutput(fileName, Context.MODE_PRIVATE);
+//                 BufferedOutputStream bos = new BufferedOutputStream(fos)) {
+//                bitmap.compress(Bitmap.CompressFormat.PNG, 80, bos);
+//                bos.flush();
+//            } catch (IOException e) {
+//                e.printStackTrace();
+//
+//            }
+//        }).start();
+    }
+
+
+    private Bitmap loadImageLocally(String fileName) {
+        try (FileInputStream fis = openFileInput(fileName)) {
+            return BitmapFactory.decodeStream(fis);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     private void openImageChooser() {
         Intent intent = new Intent();
         intent.setType("image/*");
         intent.setAction(Intent.ACTION_GET_CONTENT);
         pickImageLauncher.launch(Intent.createChooser(intent, "Выберите изображение"));
-    }
-
-    private void saveImageLocally(Bitmap bitmap, String fileName) {
-        FileOutputStream fos = null;
-        try {
-            fos = openFileOutput(fileName, Context.MODE_PRIVATE);
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos);
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (fos != null) {
-                    fos.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private Bitmap loadImageLocally(String fileName) {
-        FileInputStream fis = null;
-        try {
-            fis = openFileInput(fileName);
-            return BitmapFactory.decodeStream(fis);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        } finally {
-            try {
-                if (fis != null) {
-                    fis.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
     }
 
 

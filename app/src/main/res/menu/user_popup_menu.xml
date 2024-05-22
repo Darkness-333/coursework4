@@ -5,7 +5,9 @@
         android:title="Перенести в начало"/>
     <item
         android:id="@+id/action_exchange"
-        android:title="Обменять с"/>
+        android:title="Обменять с"
+        android:visible="false"
+        />
 
     <item
         android:id="@+id/action_skip"
@@ -16,11 +18,11 @@
         />
     <item
         android:id="@+id/action_edit"
-        android:title="Редактировать имя"/>
+        android:title="Редактировать имя"
+        android:visible="false"
+        />
     <item
         android:id="@+id/action_delete"
         android:title="Удалить"/>
-<!--    <item-->
-<!--        android:id="@+id/add"-->
-<!--        android:title="Добавить в очередь"/>-->
+
 </menu>

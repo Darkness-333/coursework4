@@ -5,6 +5,15 @@ import java.io.Serializable;
 public class User implements Serializable {
     private String name;
     private String id;
+    private boolean isAdmin=false;
+
+    public void setAdmin(boolean admin) {
+        isAdmin = admin;
+    }
+
+    public boolean getAdmin(){
+        return isAdmin;
+    }
 
     public User(){}
     public User(String name) {

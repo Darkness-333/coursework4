@@ -26,6 +26,8 @@ import com.example.coursework.activities.AvailableListsActivity;
 import com.example.coursework.activities.UserListActivity;
 import com.example.coursework.databinding.ActivityUserListBinding;
 import com.example.coursework.databinding.FragmentMembersListBinding;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -39,7 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class MembersListFragment extends Fragment  {
+public class MembersListFragment extends Fragment {
 
     FragmentMembersListBinding binding;
 
@@ -83,20 +85,36 @@ public class MembersListFragment extends Fragment  {
 
         Gson gson = new Gson();
 
+        FirebaseAuth mAuth = FirebaseAuth.getInstance();
+        FirebaseUser firebaseUser = mAuth.getCurrentUser();
+        String userId = firebaseUser.getUid();
+
         membersRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                List<User> members = new ArrayList<>();
-                for (DataSnapshot elem : snapshot.getChildren()) {
-                    // Получение значений из снимка данных и добавление их в список строк
-                    String memberId = elem.getValue(String.class);
-                    User newUser = new User();
-                    newUser.setId(memberId);
-                    members.add(newUser);
+                if (snapshot.exists()) {
+                    List<User> members;
+                    String membersJson = snapshot.getValue(String.class);
+                    Type userListType = new TypeToken<ArrayList<User>>() {
+                    }.getType();
+                    members = gson.fromJson(membersJson, userListType);
+
+                    userList.clear(); // Очищаем текущий список
+                    userList.addAll(members); // Добавляем все элементы из нового списка
+                    adapter.notifyDataSetChanged();
+
+                    for (User member : members) {
+                        if (member.getId().equals(userId)) {
+                            boolean isAdmin = member.getAdmin();
+                            adapter.setIsAdmin(isAdmin);
+                            // TODO: 19.05.2024 пишет null ref
+                            if (getActivity()!=null){
+
+                                ((UserListActivity) getActivity()).setIsAdmin(isAdmin);
+                            }
+                        }
+                    }
                 }
-                userList.clear(); // Очищаем текущий список
-                userList.addAll(members); // Добавляем все элементы из нового списка
-                adapter.notifyDataSetChanged();
             }
 
             @Override
