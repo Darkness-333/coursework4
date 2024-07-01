@@ -283,11 +283,11 @@ public class UserListAdapter extends ArrayAdapter<User> implements ChangeNameDia
                                 String userListJson = gson.toJson(updatedUserList);
                                 listIdRef.child("data").setValue(userListJson);
                                 Toast.makeText(getContext(), "Добавлен", Toast.LENGTH_SHORT).show();
-                            } else {
+                            }
+                            else {
                                 Toast.makeText(getContext(), "Уже в очереди", Toast.LENGTH_SHORT).show();
                             }
                         }
-
                         @Override
                         public void onCancelled(@NonNull DatabaseError error) {
                         }
@@ -310,7 +310,6 @@ public class UserListAdapter extends ArrayAdapter<User> implements ChangeNameDia
                                 }
                                 String newMembersJson = gson.toJson(members);
                                 membersRef.setValue(newMembersJson);
-
                             }
                         }
                         @Override
@@ -318,8 +317,6 @@ public class UserListAdapter extends ArrayAdapter<User> implements ChangeNameDia
                     });
 
                 } else if (id == R.id.action_delete) {
-
-
                     DatabaseReference membersRef = listIdRef.child("members");
                     membersRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
@@ -346,7 +343,6 @@ public class UserListAdapter extends ArrayAdapter<User> implements ChangeNameDia
                                 }
                             }
                         }
-
                         @Override
                         public void onCancelled(@NonNull DatabaseError error) {
                         }
@@ -363,9 +359,7 @@ public class UserListAdapter extends ArrayAdapter<User> implements ChangeNameDia
         User currentUser = getItem(position);
         currentUser.setName(name);
         notifyUserChanges();
-
     }
-
 
     private void notifyUserChanges() {
         listIdRef.child("name").addListenerForSingleValueEvent(new ValueEventListener() {

@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class AvailableListsActivity extends AppCompatActivity implements CreateQueueDialog.DialogCallback, AddQueueDialog.DialogCallback {
-
     ListView listView;
     List<String> listsName = new ArrayList<>();
     List<String> listsId = new ArrayList<>();
@@ -48,7 +47,6 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
     ArrayAdapter<String> adapter;
     String userId;
     Gson gson;
-
     String TAG="mylogs";
     private NetworkChangeReceiver networkChangeReceiver;
 
@@ -66,13 +64,9 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
         binding=ActivityAvailableListsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-
-
         listView = binding.list;
         adapter = new AvailableListsAdapter(AvailableListsActivity.this, listsName, listsId);
         listView.setAdapter(adapter);
-
-//        adapter.notifyDataSetChanged();
 
         networkChangeReceiver= new NetworkChangeReceiver(adapter);
 
@@ -94,15 +88,12 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
         userListsIdRef = database.getReference("users").child(userId).child("listsId");
         userListsIdRef.keepSynced(true);
 
-
         gson=new Gson();
 
         binding.profile.setOnClickListener(view -> {
             Intent intent=new Intent(this, ProfileActivity.class);
             startActivity(intent);
         });
-//        userListsIdRef.addValueEventListener(new ValueEventListener() {
-// TODO: 06.05.2024 добавить список пользователей в ссылку списка и при удалении ссылки удалять id списока у всех пользователей
 
         userListsIdRef.addListenerForSingleValueEvent(new ValueEventListener() {
             boolean needUpdateListsId=false;
@@ -118,7 +109,6 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                     progressBar.setVisibility(View.GONE);
                     return;
                 }
-//                listsId.clear();
                 totalChildrenCount = (int) dataSnapshot.getChildrenCount();
                 // Получаем список всех id списка в snapshot, получаем конкретное id,
                 // получаем ссылку на имя списка по id, заносим имя в список
@@ -140,7 +130,6 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                             else{
                                 needUpdateListsId=true;
                             }
-
                             completedChildrenCount++;
                             if (completedChildrenCount == totalChildrenCount) {
                                 // TODO: 19.05.2024 проверить удаляется ли очередь 
@@ -153,7 +142,6 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                                 }
                                 progressBar.setVisibility(View.GONE);
                             }
-
                         }
                         @Override
                         public void onCancelled(@NonNull DatabaseError error) {
@@ -179,7 +167,6 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                 startActivity(intent);
             }
         });
-
         createButton.setOnClickListener(view ->
                 CreateQueueDialog.showDialog(AvailableListsActivity.this,AvailableListsActivity.this));
 
@@ -195,7 +182,6 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
         String listId=listsReference.push().getKey();
         // записываем имя списка с таким id в ссылке на все списки
         listsReference.child(listId).child("name").setValue(name);
-
         // добавляем id в список с id
         listsId.add(listId);
         // добавляем в ссылку со всеми id списков пользователя обновленный список
@@ -223,11 +209,8 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()) {
                     String nameQueue=dataSnapshot.getValue(String.class);
-
-
                     DatabaseReference listsReference=database.getReference("lists");
                     DatabaseReference membersRef=listsReference.child(listId).child("members");
-
                     membersRef.addListenerForSingleValueEvent(new ValueEventListener() {
                         @Override
                         public void onDataChange(@NonNull DataSnapshot snapshot) {
@@ -276,7 +259,5 @@ public class AvailableListsActivity extends AppCompatActivity implements CreateQ
                 Toast.makeText(AvailableListsActivity.this, "Failed to read value.", Toast.LENGTH_SHORT).show();
             }
         });
-
     }
-
 }

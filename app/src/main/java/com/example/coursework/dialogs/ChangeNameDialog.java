@@ -6,12 +6,9 @@ import android.content.DialogInterface;
 import android.widget.EditText;
 
 public class ChangeNameDialog {
-
     // TODO: 02.05.2024 поработать с внешним видом, возможно перейти на фрагменты
-
     public interface DialogCallback {
         void onChangeName(String name, int position);
-
     }
 
     public static void showDialog(Context context, final DialogCallback callback, int position) {

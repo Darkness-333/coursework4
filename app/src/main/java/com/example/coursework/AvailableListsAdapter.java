@@ -1,6 +1,6 @@
 package com.example.coursework;
 
-//import static androidx.core.content.ContextCompat.getSystemService;
+
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -39,9 +39,7 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
     String userId;
     Gson gson;
     boolean isAdmin = false;
-//    public void setIsAdmin(boolean admin){
-//        isAdmin=admin;
-//    }
+
 
     public AvailableListsAdapter(@NonNull Context context, List<String> listsName, List<String> listsId) {
         super(context, 0, listsName);
@@ -62,7 +60,6 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
         TextView name = convertView.findViewById(R.id.name);
         ImageView control = convertView.findViewById(R.id.control);
 
-
         boolean isConnected = NetworkChangeReceiver.isConnected;
         if (isConnected) {
             control.setVisibility(View.VISIBLE);
@@ -76,7 +73,6 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
         String formattedNumber = String.format("%0" + numberWidth + "d", position + 1);
         number.setText(formattedNumber);
 
-
         control.setOnClickListener(view -> {
             showPopupMenu(view, position);
         });
@@ -88,7 +84,6 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
     public void showPopupMenu(View view, int position) {
         PopupMenu popupMenu = new PopupMenu(getContext(), view);
         popupMenu.getMenuInflater().inflate(R.menu.available_lists_popup_menu, popupMenu.getMenu());
-//        boolean isAdmin=false;
 
         String listId = listsId.get(position);
 
@@ -111,9 +106,7 @@ public class AvailableListsAdapter extends ArrayAdapter<String> {
                             if (isAdmin) {
                                 Menu menu = popupMenu.getMenu();
                                 menu.findItem(R.id.action_delete).setVisible(true);
-
                             }
-
                         }
                     }
                 }

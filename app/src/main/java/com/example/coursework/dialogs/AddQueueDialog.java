@@ -8,10 +8,8 @@ import android.widget.EditText;
 public class AddQueueDialog {
 
     // TODO: 02.05.2024 поработать с внешним видом, возможно перейти на фрагменты
-
     public interface DialogCallback {
         void onAddQueue(String name);
-
     }
 
     public static void showDialog(Context context, final DialogCallback callback) {

@@ -63,7 +63,6 @@ public class UserListActivity extends AppCompatActivity {
     DatabaseReference dataRef; // ссылка на очередь в бд
     FirebaseDatabase database;
     private NetworkChangeReceiver networkChangeReceiver;
-
     boolean showMemberListFragment = true;
     boolean isAdmin = false;
     String userId;
@@ -111,13 +110,11 @@ public class UserListActivity extends AppCompatActivity {
         dataRef = listIdRef.child("data");
         adapter.setDatabaseReference(listIdRef);
 
-
         FirebaseAuth mAuth = FirebaseAuth.getInstance();
         FirebaseUser firebaseUser = mAuth.getCurrentUser();
         userId = firebaseUser.getUid();
 
         Gson gson = new Gson();
-
 
         MembersListFragment fragment = new MembersListFragment();
         FragmentManager manager = getSupportFragmentManager();
@@ -170,9 +167,7 @@ public class UserListActivity extends AppCompatActivity {
                                 startActivity(new Intent(UserListActivity.this, AvailableListsActivity.class));
                                 finish();
                                 Toast.makeText(getApplicationContext(),"Вы были удалены из очереди",Toast.LENGTH_LONG).show();
-
                             }
-
                             @Override
                             public void onCancelled(@NonNull DatabaseError error) {}
                         });
@@ -213,11 +208,6 @@ public class UserListActivity extends AppCompatActivity {
                     userList.addAll(updatedUserList); // Добавляем все элементы из нового списка
                     adapter.notifyDataSetChanged();
 
-//                    boolean isFirstUser = !updatedUserList.isEmpty() && updatedUserList.get(0).getId().equals(userId);
-//                    if (isFirstUser) {
-////                        showSnackbar("Первый", 1000);
-//                        showNotification("Очередь \""+listName+"\"", "Вы первый в очереди.");
-//                    }
                 }
                 if (NetworkChangeReceiver.isConnected) {
                     addButton.setEnabled(true);
@@ -249,7 +239,6 @@ public class UserListActivity extends AppCompatActivity {
                         finish();
                     }
                 }
-
                 @Override
                 public void onCancelled(@NonNull DatabaseError error) {
                 }
@@ -342,7 +331,6 @@ public class UserListActivity extends AppCompatActivity {
                             String json = currentData.getValue(String.class);
                             userList = gson.fromJson(json, new TypeToken<List<User>>(){}.getType());
                         }
-
                         boolean isUserInList = false;
                         for (User user : userList) {
                             if (user.getId() != null && user.getId().equals(userId)) {
@@ -368,26 +356,6 @@ public class UserListActivity extends AppCompatActivity {
                         }
                     }
                 });
-
-//                // поиск пользователя в списке
-//                boolean isUserInList = false;
-//                for (User user : userList) {
-//                    if (user.getId() != null && user.getId().equals(userId)) {
-//                        isUserInList = true;
-//                        break;
-//                    }
-//                }
-//                if (!isUserInList) {
-//                    Gson gson = new Gson();
-////                    Snackbar.make(binding.getRoot(), "Добавлен", Snackbar.LENGTH_SHORT).show();
-//                    userList.add(newUser);
-//                    adapter.notifyDataSetChanged();
-//                    String userListJson = gson.toJson(userList);
-//                    dataRef.setValue(userListJson);
-//                    showSnackbar("Добавлен", 500);
-//                } else {
-//                    showSnackbar("Уже в очереди", 100);
-//                }
             }
 
             @Override

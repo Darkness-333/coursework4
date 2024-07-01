@@ -29,9 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class UserPositionService extends Service {
-
     private static final String CHANNEL_ID = "ForegroundServiceChannel";
-
     Gson gson;
     String userId;
     DatabaseReference userListsIdRef;
@@ -58,14 +56,11 @@ public class UserPositionService extends Service {
                     listIdRefs.add(database.getReference("lists").child(listId));
                 }
                 startTrackingUserPosition();
-
             }
             @Override
             public void onCancelled(@NonNull DatabaseError error) {}
         });
 
-
-//        dataRef = FirebaseDatabase.getInstance().getReference("lists").child("-NyH6c3oHsXy1v2eKLPD").child("data");
         gson=new Gson();
 
         startForegroundService();
@@ -95,18 +90,13 @@ public class UserPositionService extends Service {
                     "Foreground Service Channel",
                     NotificationManager.IMPORTANCE_DEFAULT
             );
-
             NotificationManager manager = getSystemService(NotificationManager.class);
             manager.createNotificationChannel(serviceChannel);
         }
     }
 
     private void startTrackingUserPosition() {
-        int numb=0;
-
-
         for (DatabaseReference listIdRef: listIdRefs){
-            numb++;
             listIdRef.child("data").addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -134,14 +124,12 @@ public class UserPositionService extends Service {
                         }
                     }
                 }
-
                 @Override
                 public void onCancelled(@NonNull DatabaseError databaseError) {
                     // Обработка ошибок при чтении из базы данных
                 }
             });
         }
-
     }
 
     private int notificationId=0;

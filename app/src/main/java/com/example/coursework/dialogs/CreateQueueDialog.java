@@ -6,7 +6,6 @@ import android.content.DialogInterface;
 import android.widget.EditText;
 
 public class CreateQueueDialog {
-
     public interface DialogCallback {
         void onCreateQueue(String name);
 //        void onNegativeButtonClicked();

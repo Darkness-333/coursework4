@@ -42,20 +42,11 @@ import java.util.List;
 
 
 public class MembersListFragment extends Fragment {
-
     FragmentMembersListBinding binding;
-
-    //    List<User> userList; // хранить информацию о пользователях очереди
     UserListAdapter adapter;
-//    DatabaseReference dataRef; // ссылка на очередь в бд
-//    FirebaseDatabase database;
-//    private NetworkChangeReceiver networkChangeReceiver;
-
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-//        networkChangeReceiver = new NetworkChangeReceiver(this);
     }
 
     @Override
@@ -74,8 +65,6 @@ public class MembersListFragment extends Fragment {
         adapter = new UserListAdapter(getContext(), userList);
         adapter.setWorkWithUsers(false);
         listView.setAdapter(adapter);
-
-
 
         // получение ссылки из intent и передача ссылки в адаптер
         FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -104,14 +93,11 @@ public class MembersListFragment extends Fragment {
                     userList.clear(); // Очищаем текущий список
                     userList.addAll(members); // Добавляем все элементы из нового списка
                     adapter.notifyDataSetChanged();
-//                    ((UserListActivity) getActivity()).adapter.notifyDataSetChanged();
                     for (User member : members) {
                         if (member.getId().equals(userId)) {
                             boolean isAdmin = member.getAdmin();
                             adapter.setIsAdmin(isAdmin);
-                            // TODO: 19.05.2024 пишет null ref
                             if (getActivity()!=null){
-
                                 ((UserListActivity) getActivity()).setIsAdmin(isAdmin);
                             }
                         }

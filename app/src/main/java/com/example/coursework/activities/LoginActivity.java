@@ -20,23 +20,18 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.FirebaseDatabase;
 
 public class LoginActivity extends AppCompatActivity {
-
     private FirebaseAuth mAuth;
-
     private EditText editTextEmail;
     private EditText editTextPassword;
     private Button buttonSignIn;
     private Button buttonSignUp;
-
     ActivityLoginBinding binding;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding=ActivityLoginBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-
 //        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
-
 
         // Инициализация Firebase Authentication
         mAuth = FirebaseAuth.getInstance();
@@ -55,7 +50,6 @@ public class LoginActivity extends AppCompatActivity {
                     signIn(email, password);
             }
         });
-
         buttonSignUp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -71,7 +65,6 @@ public class LoginActivity extends AppCompatActivity {
     @Override
     public void onStart() {
         super.onStart();
-
         Intent intent=getIntent();
         if (!intent.hasExtra("fromAct")){
             FirebaseUser currentUser = mAuth.getCurrentUser();
@@ -131,9 +124,6 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         Snackbar.make(binding.getRoot(), "Registration failed: "+e.getMessage(), Snackbar.LENGTH_LONG).show();
-
-//                        Toast.makeText(LoginActivity.this, "Registration failed: "+e.getMessage(),
-//                                Toast.LENGTH_SHORT).show();
                     }
                 });
     }

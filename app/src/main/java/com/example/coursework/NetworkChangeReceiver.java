@@ -16,9 +16,7 @@ import com.example.coursework.activities.UserListActivity;
 
 public class NetworkChangeReceiver extends BroadcastReceiver {
     public static boolean isConnected;
-
     private ArrayAdapter adapter;
-
     public NetworkChangeReceiver(ArrayAdapter adapter) {
         this.adapter = adapter;
 
@@ -28,7 +26,6 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
         ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = connectivityManager.getActiveNetworkInfo();
         isConnected = activeNetwork != null && activeNetwork.isConnectedOrConnecting();
-
 
         adapter.notifyDataSetChanged();
 

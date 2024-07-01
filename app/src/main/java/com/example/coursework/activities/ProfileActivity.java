@@ -57,9 +57,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 public class ProfileActivity extends AppCompatActivity {
-
     private ActivityResultLauncher<Intent> pickImageLauncher;
-
     private ImageView avatarImageView;
     private TextView nameTextView;
     private Button changeNameButton;
@@ -78,7 +76,6 @@ public class ProfileActivity extends AppCompatActivity {
         binding = ActivityProfileBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-
         Intent serviceIntent = new Intent(this, UserPositionService.class);
         startService(serviceIntent);
 
@@ -90,7 +87,6 @@ public class ProfileActivity extends AppCompatActivity {
         changeAvatarButton = binding.changeAvatarButton;
         changeAccountButton = binding.changeAccountButton;
         quitButton = binding.quitButton;
-
 
         ActionBar actionBar;
 
@@ -132,7 +128,6 @@ public class ProfileActivity extends AppCompatActivity {
             }
         });
 
-
         imageRef.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
                     @Override
                     public void onSuccess(Uri uri) {
@@ -141,7 +136,6 @@ public class ProfileActivity extends AppCompatActivity {
 //                                .resize(150, 150)
 //                                .centerCrop()
 //                                .into(avatarImageView);
-
                         Picasso.get().load(uri).into(new Target() {
                             @Override
                             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
@@ -150,6 +144,7 @@ public class ProfileActivity extends AppCompatActivity {
 
                             @Override
                             public void onBitmapFailed(Exception e, Drawable errorDrawable) {
+
                             }
 
                             @Override
@@ -163,7 +158,7 @@ public class ProfileActivity extends AppCompatActivity {
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
-                        Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+//                        Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
 
                     }
                 });
@@ -210,7 +205,6 @@ public class ProfileActivity extends AppCompatActivity {
                                         @Override
                                         public void onFailure(@NonNull Exception e) {
                                             Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-
                                         }
                                     });
                         } catch (Exception e) {
@@ -218,10 +212,7 @@ public class ProfileActivity extends AppCompatActivity {
                         }
                     }
                 });
-
-
     }
-
 
 //    private void saveImageLocally(Bitmap bitmap, String fileName) {
 //        try (FileOutputStream fos = openFileOutput(fileName, Context.MODE_PRIVATE)) {
@@ -239,7 +230,7 @@ public class ProfileActivity extends AppCompatActivity {
                 // Сохраняем изображение во временный файл
                 try (FileOutputStream fos = new FileOutputStream(tempFile);
                      BufferedOutputStream bos = new BufferedOutputStream(fos)) {
-                    bitmap.compress(Bitmap.CompressFormat.PNG, 80, bos);
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 70, bos);
                     bos.flush();
                 }
                 // Если успешно сохранили во временный файл, переименовываем его в конечный файл
@@ -252,12 +243,10 @@ public class ProfileActivity extends AppCompatActivity {
                     tempFile.delete();
                     throw new IOException("Failed to rename temp file to final file.");
                 }
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }).start();
-
 //        new Thread(() -> {
 //            try (FileOutputStream fos = openFileOutput(fileName, Context.MODE_PRIVATE);
 //                 BufferedOutputStream bos = new BufferedOutputStream(fos)) {
@@ -269,7 +258,6 @@ public class ProfileActivity extends AppCompatActivity {
 //            }
 //        }).start();
     }
-
 
     private Bitmap loadImageLocally(String fileName) {
         try (FileInputStream fis = openFileInput(fileName)) {
@@ -287,13 +275,11 @@ public class ProfileActivity extends AppCompatActivity {
         pickImageLauncher.launch(Intent.createChooser(intent, "Выберите изображение"));
     }
 
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
         return super.onCreateOptionsMenu(menu);
     }
-
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
